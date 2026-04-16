@@ -285,8 +285,7 @@
                     <tr>
                         <th>Avatar</th>
                         <th>Nome</th>
-                        <th>E-mail</th>
-                        <th>Criado em</th>
+                        <th>ID</th>
                         <th>Tipo</th>
                         <th>Ações</th>
                     </tr>
@@ -331,13 +330,12 @@
         async function loadUsers() {
             const { data: perfis, error } = await supabaseClient
                 .from('perfis')
-                .select('*')
-                .order('created_at', { ascending: false });
+                .select('*');
 
             if (error) {
                 document.getElementById('usersTable').innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #c00;">Erro ao carregar: ${error.message}</td>
+                        <td colspan="5" style="text-align: center; color: #c00;">Erro ao carregar: ${error.message}</td>
                     </tr>
                 `;
                 console.error('Erro ao carregar perfis:', error);
@@ -348,7 +346,6 @@
             if (perfis && perfis.length > 0) {
                 perfis.forEach(p => {
                     const initial = (p.nome_completo || '?').charAt(0).toUpperCase();
-                    const createdAt = p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '-';
                     const isAdmin = p.is_admin || false;
 
                     html += `
@@ -356,14 +353,13 @@
                             <td><div style="width:35px;height:35px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;">${initial}</div></td>
                             <td>${p.nome_completo || 'Sem nome'}</td>
                             <td>ID: ${p.id.substring(0, 8)}...</td>
-                            <td>${createdAt}</td>
                             <td>${isAdmin ? '<span class="badge-admin">Admin</span>' : '<span class="badge-user">Usuário</span>'}</td>
                             <td><button class="btn-delete" onclick="deleteUser('${p.id}')">Excluir</button></td>
                         </tr>
                     `;
                 });
             } else {
-                html = '<tr><td colspan="6" style="text-align: center; color: #666;">Nenhum usuário encontrado na tabela perfis</td></tr>';
+                html = '<tr><td colspan="5" style="text-align: center; color: #666;">Nenhum usuário encontrado na tabela perfis</td></tr>';
             }
 
             document.getElementById('usersTable').innerHTML = html;
