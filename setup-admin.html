@@ -29,6 +29,20 @@
 
     <script src="config.js"></script>
     <script>
+        async function checkConnection() {
+            try {
+                const { data, error } = await supabaseClient.from('perfis').select('id').limit(1);
+                if (error) throw error;
+                console.log('Conexão OK');
+                return true;
+            } catch (err) {
+                console.error('Erro de conexão:', err);
+                document.getElementById('result').textContent = '❌ Erro: ' + err.message + ' - A tabela perfis pode não existir!';
+                document.getElementById('result').className = 'result error show';
+                return false;
+            }
+        }
+
         document.getElementById('setupBtn').addEventListener('click', async () => {
             const btn = document.getElementById('setupBtn');
             const result = document.getElementById('result');
@@ -42,14 +56,15 @@
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 
                 if (!user) {
-                    result.textContent = 'Você precisa estar logado!';
+                    result.textContent = '❌ Você precisa estar logado!';
                     result.className = 'result error show';
                     btn.disabled = false;
-                    btn.textContent = 'Tornar-me Admin';
+                    btn.textContent = 'Tentar Novamente';
                     return;
                 }
 
                 const fullName = user.user_metadata?.full_name || user.email;
+                console.log('User ID:', user.id);
 
                 const { error } = await supabaseClient
                     .from('perfis')
@@ -59,19 +74,27 @@
                         is_admin: true
                     }, { onConflict: 'id' });
 
-                if (error) throw error;
-
-                result.textContent = '✓ Você agora é ADMINISTRADOR! Faça logout e login novamente.';
-                result.className = 'result success show';
-                btn.textContent = '✓ Admin Ativado!';
+                if (error) {
+                    result.textContent = '❌ Erro: ' + error.message;
+                    result.className = 'result error show';
+                    console.error('Erro detalhado:', error);
+                } else {
+                    result.textContent = '✓ Você agora é ADMINISTRADOR! Faça logout e login novamente.';
+                    result.className = 'result success show';
+                    btn.textContent = '✓ Admin Ativado!';
+                }
 
             } catch (err) {
-                result.textContent = 'Erro: ' + err.message;
+                result.textContent = '❌ Erro: ' + err.message;
                 result.className = 'result error show';
-                btn.disabled = false;
-                btn.textContent = 'Tentar Novamente';
+                console.error('Erro:', err);
             }
+            
+            btn.disabled = false;
+            btn.textContent = 'Tentar Novamente';
         });
+
+        checkConnection();
     </script>
 </body>
 </html>
