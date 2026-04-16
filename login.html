@@ -169,6 +169,44 @@
         .btn-signin:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 25px rgba(212, 175, 55, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-signin:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .alert-error {
+            background: rgba(212, 175, 55, 0.15);
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .alert-error.show {
+            display: block;
+        }
+
+        .alert-success {
+            background: rgba(50, 200, 50, 0.1);
+            border: 1px solid rgba(50, 200, 50, 0.5);
+            color: #50c850;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .alert-success.show {
+            display: block;
         }
 
         .forgot-pass {
@@ -272,12 +310,15 @@
                 
                 <div class="box-panel">
                     <h4>Entre com sua conta <strong>ELO</strong></h4>
-                    <form class="login-form">
-                        <label>E-mail:</label>
-                        <input type="text" placeholder="ex: jo@exemplo.com" required>
+                    <form class="login-form" id="loginForm">
+                        <div id="loginAlert" class="alert-error">E-mail ou senha incorretos.</div>
+                        <div id="loginSuccess" class="alert-success">Login realizado! Redirecionando...</div>
+
+                        <label for="email">E-mail:</label>
+                        <input type="email" id="email" name="email" placeholder="ex: jo@exemplo.com" required>
                         
-                        <label>Senha:</label>
-                        <input type="password" required>
+                        <label for="password">Senha:</label>
+                        <input type="password" id="password" name="password" required>
                         
                         <div class="remember-me">
                             <input type="checkbox" id="remember">
@@ -285,7 +326,7 @@
                             <span style="font-size: 0.7rem; color: #555;">Não use em computadores públicos. [?]</span></label>
                         </div>
                         
-                        <button type="submit" class="btn-signin">Entrar</button>
+                        <button type="submit" class="btn-signin" id="submitBtn">Entrar</button>
                         <a href="#" class="forgot-pass">Não consegue acessar a sua conta?</a>
                     </form>
                 </div>
@@ -303,6 +344,45 @@
     <footer>
         &copy; 2026 ELO - <a href="sobre.html">Sobre o ELO</a> - <a href="seguranca.html">Centro de Segurança</a> - <a href="privacidade.html">Privacidade</a> - <a href="termos.html">Termos</a>
     </footer>
+
+    <script src="config.js"></script>
+    <script>
+        const form = document.getElementById('loginForm');
+        const loginAlert = document.getElementById('loginAlert');
+        const loginSuccess = document.getElementById('loginSuccess');
+        const submitBtn = document.getElementById('submitBtn');
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Entrando...';
+            loginAlert.classList.remove('show');
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                loginAlert.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Entrar';
+                setTimeout(() => {
+                    loginAlert.classList.remove('show');
+                }, 5000);
+            } else {
+                loginSuccess.classList.add('show');
+                submitBtn.textContent = 'Sucesso!';
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
+            }
+        });
+    </script>
 
 </body>
 </html>

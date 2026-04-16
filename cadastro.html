@@ -145,6 +145,27 @@
             display: block;
         }
 
+        .alert-success {
+            background: rgba(50, 200, 50, 0.1);
+            border: 1px solid rgba(50, 200, 50, 0.5);
+            color: #50c850;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .alert-success.show {
+            display: block;
+        }
+
+        .btn-register:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
         .birthdate-group {
             display: flex;
             gap: 10px;
@@ -312,8 +333,10 @@
                         </div>
 
                         <div id="passwordAlert" class="alert-error">As senhas não coincidem. Por favor, tente novamente.</div>
+                        <div id="successAlert" class="alert-success">Cadastro realizado com sucesso! Redirecionando...</div>
+                        <div id="errorAlert" class="alert-error">Erro ao realizar cadastro. Tente novamente.</div>
 
-                        <button type="submit" class="btn-register">Concluir Cadastro</button>
+                        <button type="submit" class="btn-register" id="submitBtn">Concluir Cadastro</button>
 
                         <p class="login-link">Já é membro? <a href="login.html">Entre aqui</a></p>
                     </form>
@@ -327,6 +350,7 @@
         &copy; 2026 ELO - <a href="sobre.html">Sobre o ELO</a> - <a href="seguranca.html">Centro de Segurança</a> - <a href="privacidade.html">Privacidade</a> - <a href="termos.html">Termos</a>
     </footer>
 
+    <script src="config.js"></script>
     <script>
         const diaSelect = document.getElementById('birth_day');
         const mesSelect = document.getElementById('birth_month');
@@ -348,22 +372,66 @@
 
         const form = document.getElementById('registerForm');
         const passwordAlert = document.getElementById('passwordAlert');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const submitBtn = document.getElementById('submitBtn');
 
-        form.addEventListener('submit', function(e) {
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            passwordAlert.classList.remove('show');
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
 
             if (password !== confirmPassword) {
-                e.preventDefault();
                 passwordAlert.classList.add('show');
                 setTimeout(() => {
                     passwordAlert.classList.remove('show');
                 }, 5000);
+                return;
             }
-        });
 
-        document.getElementById('confirm_password').addEventListener('input', function() {
+            const fullName = document.getElementById('full_name').value;
+            const email = document.getElementById('email').value;
+            const birthDay = document.getElementById('birth_day').value;
+            const birthMonth = document.getElementById('birth_month').value;
+            const birthYear = document.getElementById('birth_year').value;
+            const birthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Cadastrando...';
+            errorAlert.classList.remove('show');
             passwordAlert.classList.remove('show');
+
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                        birth_date: birthDate
+                    }
+                }
+            });
+
+            if (error) {
+                errorAlert.textContent = error.message;
+                errorAlert.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Concluir Cadastro';
+                setTimeout(() => {
+                    errorAlert.classList.remove('show');
+                }, 5000);
+            } else {
+                successAlert.classList.add('show');
+                submitBtn.textContent = 'Sucesso!';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            }
         });
     </script>
 

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELO | Home</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            background-image: radial-gradient(circle at center, #0d0d0d 0%, #000000 70%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        :root {
+            --gold: #d4af37;
+            --gold-bright: #f9e295;
+            --dark-box: #0a0a0a;
+            --border-style: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        header {
+            padding: 15px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid;
+            border-image: linear-gradient(to right, transparent, var(--gold), transparent) 1;
+        }
+
+        .logo-area a img {
+            height: 35px;
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #000;
+            font-size: 18px;
+        }
+
+        .user-name {
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .btn-logout {
+            background: transparent;
+            border: 1px solid #666;
+            color: #ccc;
+            padding: 6px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .main-content {
+            padding-top: 80px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .welcome-section {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .welcome-section h1 {
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .welcome-section p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 60px;
+        }
+
+        footer a {
+            color: #999;
+            text-decoration: underline;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            color: var(--gold);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <a href="home.html"><img src="imagens/LOGO ELO FINAL.png" alt="ELO"></a>
+        </div>
+        <div class="user-menu">
+            <div class="user-avatar" id="userAvatar">?</div>
+            <span class="user-name" id="userName">Carregando...</span>
+            <button class="btn-logout" id="logoutBtn">Sair</button>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="welcome-section">
+            <h1>Bem-vindo ao ELO!</h1>
+            <p id="welcomeMessage">Sua conta foi criada com sucesso. Explore comunidades, faça conexões e compartilhe conhecimento.</p>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 ELO - <a href="sobre.html">Sobre o ELO</a> - <a href="seguranca.html">Centro de Segurança</a> - <a href="privacidade.html">Privacidade</a> - <a href="termos.html">Termos</a>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        async function checkAuth() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const fullName = user.user_metadata?.full_name || user.email;
+            const firstName = fullName.split(' ')[0];
+
+            document.getElementById('userName').textContent = fullName;
+            document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+            document.getElementById('welcomeMessage').textContent = `Olá, ${firstName}! Sua conta foi criada com sucesso. Explore comunidades, faça conexões e compartilhe conhecimento.`;
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        checkAuth();
+    </script>
+
+</body>
+</html>
