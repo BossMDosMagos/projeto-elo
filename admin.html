@@ -329,48 +329,56 @@
         }
 
         async function loadUsers() {
-            const { data: users, error } = await supabaseClient.auth.admin.listUsers();
+            const { data: perfis, error } = await supabaseClient
+                .from('perfis')
+                .select('*')
+                .order('created_at', { ascending: false });
 
             if (error) {
                 document.getElementById('usersTable').innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; color: #c00;">Erro ao carregar usuários</td>
+                        <td colspan="6" style="text-align: center; color: #c00;">Erro ao carregar: ${error.message}</td>
                     </tr>
                 `;
+                console.error('Erro ao carregar perfis:', error);
                 return;
             }
 
-            const { data: perfis } = await supabaseClient.from('perfis').select('*');
-
             let html = '';
-            users.users.forEach(u => {
-                const perfil = perfis.find(p => p.id === u.id);
-                const isAdmin = perfil?.is_admin || false;
-                const name = u.user_metadata?.full_name || u.email;
-                const initial = name.charAt(0).toUpperCase();
-                const createdAt = new Date(u.created_at).toLocaleDateString('pt-BR');
+            if (perfis && perfis.length > 0) {
+                perfis.forEach(p => {
+                    const initial = (p.nome_completo || '?').charAt(0).toUpperCase();
+                    const createdAt = p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '-';
+                    const isAdmin = p.is_admin || false;
 
-                html += `
-                    <tr>
-                        <td><div style="width:35px;height:35px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;">${initial}</div></td>
-                        <td>${name}</td>
-                        <td>${u.email}</td>
-                        <td>${createdAt}</td>
-                        <td>${isAdmin ? '<span class="badge-admin">Admin</span>' : '<span class="badge-user">Usuário</span>'}</td>
-                        <td><button class="btn-delete" onclick="deleteUser('${u.id}')">Excluir</button></td>
-                    </tr>
-                `;
-            });
+                    html += `
+                        <tr>
+                            <td><div style="width:35px;height:35px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;color:#000;font-weight:bold;">${initial}</div></td>
+                            <td>${p.nome_completo || 'Sem nome'}</td>
+                            <td>ID: ${p.id.substring(0, 8)}...</td>
+                            <td>${createdAt}</td>
+                            <td>${isAdmin ? '<span class="badge-admin">Admin</span>' : '<span class="badge-user">Usuário</span>'}</td>
+                            <td><button class="btn-delete" onclick="deleteUser('${p.id}')">Excluir</button></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                html = '<tr><td colspan="6" style="text-align: center; color: #666;">Nenhum usuário encontrado na tabela perfis</td></tr>';
+            }
 
-            document.getElementById('usersTable').innerHTML = html || '<tr><td colspan="6" style="text-align: center; color: #666;">Nenhum usuário encontrado</td></tr>';
+            document.getElementById('usersTable').innerHTML = html;
         }
 
         async function deleteUser(userId) {
-            if (!confirm('Tem certeza que deseja excluir este usuário?')) return;
+            if (!confirm('Tem certeza que deseja excluir este usuário?\n\nNota: Para deletar do Auth, use o painel do Supabase.')) return;
 
-            const { error } = await supabaseClient.auth.admin.deleteUser(userId);
+            const { error } = await supabaseClient
+                .from('perfis')
+                .delete()
+                .eq('id', userId);
+
             if (error) {
-                alert('Erro ao excluir usuário: ' + error.message);
+                alert('Erro ao excluir: ' + error.message);
             } else {
                 loadUsers();
             }
