@@ -508,6 +508,27 @@
     <script>
         let isAdmin = false;
 
+        async function ensureProfile(user) {
+            const { data: perfil } = await supabaseClient
+                .from('perfis')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (!perfil) {
+                const fullName = user.user_metadata?.full_name || user.email;
+                await supabaseClient
+                    .from('perfis')
+                    .insert({
+                        id: user.id,
+                        nome_completo: fullName,
+                        is_admin: false
+                    });
+                return { is_admin: false, nome_completo: fullName };
+            }
+            return perfil;
+        }
+
         async function checkAuth() {
             const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -516,12 +537,8 @@
                 return;
             }
 
-            const { data: perfil, error } = await supabaseClient
-                .from('perfis')
-                .select('is_admin, nome_completo')
-                .eq('id', user.id)
-                .single();
-
+            let perfil = await ensureProfile(user);
+            
             isAdmin = perfil?.is_admin || false;
             const fullName = perfil?.nome_completo || user.user_metadata?.full_name || user.email;
             const firstName = fullName.split(' ')[0];
@@ -531,10 +548,13 @@
             document.getElementById('welcomeTitle').textContent = `Olá, ${firstName}!`;
             document.getElementById('welcomeMessage').textContent = 'Bem-vindo ao ELO. Explore comunidades, faça conexões e compartilhe conhecimento.';
 
+            console.log('isAdmin:', isAdmin);
+
             if (isAdmin) {
                 document.getElementById('userBadge').classList.add('visible');
                 document.getElementById('adminSection').classList.add('visible');
                 document.querySelectorAll('.admin-delete').forEach(el => el.classList.add('visible'));
+                console.log('Admin menu ativado!');
             }
         }
 

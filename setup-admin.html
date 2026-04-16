@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELO | Setup Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { background: #000; color: #fff; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: #0a0a0a; border: 1px solid #d4af37; border-radius: 12px; padding: 40px; max-width: 500px; width: 90%; text-align: center; }
+        h1 { color: #d4af37; margin-bottom: 20px; }
+        p { color: #888; margin-bottom: 30px; line-height: 1.6; }
+        .btn { background: linear-gradient(180deg, #f9e295, #d4af37); color: #000; border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.5); }
+        .result { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        .success { background: rgba(50, 200, 50, 0.2); border: 1px solid #50c850; color: #50c850; }
+        .error { background: rgba(200, 50, 50, 0.2); border: 1px solid #c83232; color: #c83232; }
+        .show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚠️ Setup Admin</h1>
+        <p>Esta página vai configurar sua conta como Administrador do ELO. Clique no botão abaixo para ativar.</p>
+        <button class="btn" id="setupBtn">Tornar-me Admin</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script>
+        document.getElementById('setupBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('setupBtn');
+            const result = document.getElementById('result');
+            
+            btn.disabled = true;
+            btn.textContent = 'Configurando...';
+            result.className = 'result';
+            result.style.display = 'none';
+
+            try {
+                const { data: { user } } = await supabaseClient.auth.getUser();
+                
+                if (!user) {
+                    result.textContent = 'Você precisa estar logado!';
+                    result.className = 'result error show';
+                    btn.disabled = false;
+                    btn.textContent = 'Tornar-me Admin';
+                    return;
+                }
+
+                const fullName = user.user_metadata?.full_name || user.email;
+
+                const { error } = await supabaseClient
+                    .from('perfis')
+                    .upsert({
+                        id: user.id,
+                        nome_completo: fullName,
+                        is_admin: true
+                    }, { onConflict: 'id' });
+
+                if (error) throw error;
+
+                result.textContent = '✓ Você agora é ADMINISTRADOR! Faça logout e login novamente.';
+                result.className = 'result success show';
+                btn.textContent = '✓ Admin Ativado!';
+
+            } catch (err) {
+                result.textContent = 'Erro: ' + err.message;
+                result.className = 'result error show';
+                btn.disabled = false;
+                btn.textContent = 'Tentar Novamente';
+            }
+        });
+    </script>
+</body>
+</html>
