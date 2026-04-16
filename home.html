@@ -71,6 +71,16 @@
             font-size: 14px;
         }
 
+        .user-badge {
+            background: var(--gold);
+            color: #000;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
         .btn-logout {
             background: transparent;
             border: 1px solid #666;
@@ -88,27 +98,152 @@
         }
 
         .main-content {
+            display: flex;
             padding-top: 80px;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-left: 20px;
-            padding-right: 20px;
+            min-height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 250px;
+            padding: 30px 20px;
+            border-right: 1px solid rgba(255,255,255,0.05);
+            position: fixed;
+            height: calc(100vh - 80px);
+            overflow-y: auto;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-menu li {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            color: #888;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .sidebar-menu a:hover {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--gold);
+        }
+
+        .sidebar-menu a.active {
+            background: rgba(212, 175, 55, 0.15);
+            color: var(--gold);
+        }
+
+        .sidebar-menu .admin-only {
+            display: none;
+        }
+
+        .sidebar-menu .admin-only.visible {
+            display: block;
+        }
+
+        .content-area {
+            flex: 1;
+            margin-left: 250px;
+            padding: 30px;
         }
 
         .welcome-section {
             text-align: center;
-            padding: 60px 20px;
+            padding: 40px;
+            background: var(--dark-box);
+            border: var(--border-style);
+            border-radius: 8px;
+            margin-bottom: 30px;
         }
 
         .welcome-section h1 {
             color: var(--gold);
-            font-size: 2.5rem;
+            font-size: 2rem;
             margin-bottom: 15px;
         }
 
         .welcome-section p {
             color: #888;
-            font-size: 1.1rem;
+            font-size: 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--dark-box);
+            border: var(--border-style);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .admin-panel {
+            display: none;
+            background: rgba(212, 175, 55, 0.05);
+            border: 1px solid var(--gold);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .admin-panel.visible {
+            display: block;
+        }
+
+        .admin-panel h2 {
+            color: var(--gold);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .admin-btn {
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.3s;
+        }
+
+        .admin-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
         }
 
         footer {
@@ -117,7 +252,7 @@
             text-align: center;
             font-size: 0.75rem;
             color: #666;
-            margin-top: 60px;
+            margin-left: 250px;
         }
 
         footer a {
@@ -128,6 +263,18 @@
 
         footer a:hover {
             color: var(--gold);
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                display: none;
+            }
+            .content-area {
+                margin-left: 0;
+            }
+            footer {
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -140,15 +287,79 @@
         <div class="user-menu">
             <div class="user-avatar" id="userAvatar">?</div>
             <span class="user-name" id="userName">Carregando...</span>
+            <span class="user-badge" id="userBadge" style="display:none;">Admin</span>
             <button class="btn-logout" id="logoutBtn">Sair</button>
         </div>
     </header>
 
     <div class="main-content">
-        <div class="welcome-section">
-            <h1>Bem-vindo ao ELO!</h1>
-            <p id="welcomeMessage">Sua conta foi criada com sucesso. Explore comunidades, faça conexões e compartilhe conhecimento.</p>
-        </div>
+        <nav class="sidebar">
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="home.html" class="active">
+                        <span>🏠</span> Início
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span>👥</span> Comunidades
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span>📝</span> Recados
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span>📷</span> Fotos
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <span>⚙️</span> Configurações
+                    </a>
+                </li>
+                <li class="admin-only" id="adminMenu">
+                    <a href="admin.html">
+                        <span>🛡️</span> Painel de Controle
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <main class="content-area">
+            <div class="welcome-section">
+                <h1 id="welcomeTitle">Bem-vindo ao ELO!</h1>
+                <p id="welcomeMessage">Carregando suas informações...</p>
+            </div>
+
+            <div class="admin-panel" id="adminPanel">
+                <h2>🛡️ Painel do Administrador</h2>
+                <p style="color: #888; margin-bottom: 15px;">Ferramentas de administração disponíveis:</p>
+                <div class="admin-actions">
+                    <button class="admin-btn">Gerenciar Usuários</button>
+                    <button class="admin-btn">Moderar Conteúdo</button>
+                    <button class="admin-btn">Ver Relatórios</button>
+                    <button class="admin-btn">Configurações</button>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>0</h3>
+                    <p>Comunidades</p>
+                </div>
+                <div class="stat-card">
+                    <h3>0</h3>
+                    <p>Recados</p>
+                </div>
+                <div class="stat-card">
+                    <h3>0</h3>
+                    <p>Amigos</p>
+                </div>
+            </div>
+        </main>
     </div>
 
     <footer>
@@ -158,23 +369,44 @@
     <script src="config.js"></script>
     <script>
         async function checkAuth() {
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-            if (!user) {
+            if (userError || !user) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            const fullName = user.user_metadata?.full_name || user.email;
+            const { data: perfil, error: perfilError } = await supabaseClient
+                .from('perfis')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            if (perfilError) {
+                console.log('Perfil não encontrado, tentando buscar metadados...');
+            }
+
+            const isAdmin = perfil?.is_admin || false;
+            const fullName = perfil?.nome_completo || user.user_metadata?.full_name || user.email;
             const firstName = fullName.split(' ')[0];
 
             document.getElementById('userName').textContent = fullName;
             document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
-            document.getElementById('welcomeMessage').textContent = `Olá, ${firstName}! Sua conta foi criada com sucesso. Explore comunidades, faça conexões e compartilhe conhecimento.`;
+            document.getElementById('welcomeTitle').textContent = `Olá, ${firstName}!`;
+            document.getElementById('welcomeMessage').textContent = 'Bem-vindo ao ELO. Explore comunidades, faça conexões e compartilhe conhecimento.';
+
+            if (isAdmin) {
+                document.getElementById('userBadge').style.display = 'inline';
+                document.getElementById('adminMenu').classList.add('visible');
+                document.getElementById('adminPanel').classList.add('visible');
+            }
+
+            sessionStorage.setItem('isAdmin', isAdmin ? 'true' : 'false');
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await supabaseClient.auth.signOut();
+            sessionStorage.removeItem('isAdmin');
             window.location.href = 'index.html';
         });
 

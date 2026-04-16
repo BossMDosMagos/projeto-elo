@@ -425,12 +425,18 @@
                 setTimeout(() => {
                     errorAlert.classList.remove('show');
                 }, 5000);
+            } else if (data.user && !data.session) {
+                successAlert.textContent = 'Cadastro realizado! Verifique seu e-mail para confirmar a conta.';
+                submitBtn.textContent = 'E-mail Enviado!';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 3000);
             } else {
                 successAlert.classList.add('show');
                 submitBtn.textContent = 'Sucesso!';
                 setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
+                    window.location.href = 'home.html';
+                }, 1500);
             }
         });
     </script>
