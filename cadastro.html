@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELO | Cadastro - Participe da Comunidade</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            background-image: radial-gradient(circle at center, #0d0d0d 0%, #000000 70%);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        :root {
+            --gold: #d4af37;
+            --gold-light: #f9e295;
+            --dark-box: #0a0a0a;
+            --border-style: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 100px 20px 60px;
+        }
+
+        .container {
+            display: flex;
+            max-width: 900px;
+            width: 100%;
+            gap: 20px;
+        }
+
+        .left-panel {
+            flex: 0.8;
+            background: var(--dark-box);
+            border: var(--border-style);
+            padding: 40px 30px;
+            border-radius: 4px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .logo-main {
+            width: 150px;
+            margin-bottom: 30px;
+            margin-left: auto;
+            margin-right: auto;
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+        }
+
+        .left-panel p {
+            color: #ccc;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .right-panel {
+            flex: 1.2;
+        }
+
+        .form-box {
+            background: var(--dark-box);
+            border: var(--border-style);
+            padding: 35px;
+            border-radius: 4px;
+        }
+
+        .form-box h2 {
+            color: var(--gold);
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px 10px 10px 12px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: var(--gold);
+            outline: none;
+            box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+        }
+
+        .password-hint {
+            font-size: 0.75rem;
+            color: var(--gold);
+            margin-top: 5px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .form-group:focus-within .password-hint {
+            opacity: 1;
+        }
+
+        .alert-error {
+            background: rgba(255, 50, 50, 0.1);
+            border: 1px solid rgba(255, 50, 50, 0.5);
+            color: #ff6b6b;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        .alert-error.show {
+            display: block;
+        }
+
+        .birthdate-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .birthdate-group select {
+            flex: 1;
+            padding: 10px;
+            background: #111;
+            border: 1px solid #333;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .birthdate-group select:focus {
+            border-color: var(--gold);
+            outline: none;
+        }
+
+        .checkbox-group {
+            margin-bottom: 20px;
+        }
+
+        .checkbox-group label {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-top: 3px;
+        }
+
+        .checkbox-group a {
+            color: var(--gold);
+            text-decoration: underline;
+        }
+
+        .btn-register {
+            width: 100%;
+            background: linear-gradient(180deg, var(--gold-light) 0%, var(--gold) 50%, #b8941f 100%);
+            padding: 14px;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            filter: brightness(1.2);
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .login-link a {
+            color: var(--gold);
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        footer a {
+            color: #999;
+            text-decoration: underline;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            color: var(--gold);
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                flex-direction: column;
+            }
+            .left-panel {
+                display: none;
+            }
+            .birthdate-group {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="main-wrapper">
+        <div class="container">
+            
+            <div class="left-panel">
+                <img src="imagens/LOGO ELO FINAL.png" alt="ELO Logo" class="logo-main">
+                <p>A sua nova jornada técnica começa aqui. Junte-se a milhares de entusiastas.</p>
+            </div>
+
+            <div class="right-panel">
+                <div class="form-box">
+                    <h2>Crie sua conta no ELO</h2>
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label for="full_name">Nome Completo:</label>
+                            <input type="text" id="full_name" name="full_name" placeholder="Seu nome completo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">E-mail:</label>
+                            <input type="email" id="email" name="email" placeholder="seu@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">Senha:</label>
+                            <input type="password" id="password" name="password" placeholder="Mínimo 8 caracteres" minlength="8" required>
+                            <span class="password-hint">Mínimo 8 caracteres, incluindo números e símbolos.</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">Confirmar Senha:</label>
+                            <input type="password" id="confirm_password" name="confirm_password" placeholder="Repita a senha" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data de Nascimento:</label>
+                            <div class="birthdate-group">
+                                <select id="birth_day" name="birth_day" required>
+                                    <option value="">Dia</option>
+                                </select>
+                                <select id="birth_month" name="birth_month" required>
+                                    <option value="">Mês</option>
+                                </select>
+                                <select id="birth_year" name="birth_year" required>
+                                    <option value="">Ano</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="terms" name="terms" required>
+                                Eu li e aceito os <a href="termos.html">Termos de Uso</a> e a <a href="privacidade.html">Política de Privacidade</a>.
+                            </label>
+                        </div>
+
+                        <div id="passwordAlert" class="alert-error">As senhas não coincidem. Por favor, tente novamente.</div>
+
+                        <button type="submit" class="btn-register">Concluir Cadastro</button>
+
+                        <p class="login-link">Já é membro? <a href="login.html">Entre aqui</a></p>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 ELO - <a href="sobre.html">Sobre o ELO</a> - <a href="seguranca.html">Centro de Segurança</a> - <a href="privacidade.html">Privacidade</a> - <a href="termos.html">Termos</a>
+    </footer>
+
+    <script>
+        const diaSelect = document.getElementById('birth_day');
+        const mesSelect = document.getElementById('birth_month');
+        const anoSelect = document.getElementById('birth_year');
+
+        for (let i = 1; i <= 31; i++) {
+            diaSelect.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+
+        const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        meses.forEach((mes, index) => {
+            mesSelect.innerHTML += `<option value="${index + 1}">${mes}</option>`;
+        });
+
+        const anoAtual = new Date().getFullYear();
+        for (let i = anoAtual; i >= 1900; i--) {
+            anoSelect.innerHTML += `<option value="${i}">${i}</option>`;
+        }
+
+        const form = document.getElementById('registerForm');
+        const passwordAlert = document.getElementById('passwordAlert');
+
+        form.addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+
+            if (password !== confirmPassword) {
+                e.preventDefault();
+                passwordAlert.classList.add('show');
+                setTimeout(() => {
+                    passwordAlert.classList.remove('show');
+                }, 5000);
+            }
+        });
+
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            passwordAlert.classList.remove('show');
+        });
+    </script>
+
+</body>
+</html>

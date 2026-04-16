@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ELO | Centro de Segurança</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            background-image: radial-gradient(circle at center, #0d0d0d 0%, #000000 70%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        :root {
+            --gold: #d4af37;
+            --gold-bright: #f9e295;
+            --dark-box: #0a0a0a;
+            --border-style: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        header {
+            padding: 20px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid;
+            border-image: linear-gradient(to right, transparent, var(--gold), transparent) 1;
+        }
+
+        .logo-area a img {
+            height: 35px;
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6));
+            transition: transform 0.3s ease;
+        }
+
+        .logo-area a img:hover {
+            transform: scale(1.1);
+        }
+
+        nav {
+            display: flex;
+            gap: 30px;
+        }
+
+        nav a {
+            color: #ccc;
+            text-decoration: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--gold);
+            text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .btn-login {
+            background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, #b8941f 100%);
+            color: #000;
+            padding: 8px 20px;
+            font-size: 11px;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            text-decoration: none;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(212, 175, 55, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 120px 20px 60px;
+        }
+
+        .content-box {
+            max-width: 700px;
+            background: var(--dark-box);
+            border: var(--border-style);
+            padding: 50px;
+            border-radius: 8px;
+        }
+
+        .content-box h1 {
+            color: var(--gold);
+            font-size: 2rem;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .content-box h2 {
+            color: var(--gold);
+            font-size: 1.2rem;
+            margin: 25px 0 10px;
+        }
+
+        .content-box h2:first-of-type {
+            margin-top: 0;
+        }
+
+        .content-box p {
+            color: #ccc;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            margin-bottom: 15px;
+        }
+
+        .content-box ul {
+            color: #ccc;
+            font-size: 1.05rem;
+            line-height: 1.8;
+            padding-left: 20px;
+        }
+
+        .content-box li {
+            margin-bottom: 10px;
+        }
+
+        footer {
+            padding: 20px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            text-align: center;
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        footer a {
+            color: #999;
+            text-decoration: underline;
+            margin: 0 8px;
+        }
+
+        footer a:hover {
+            color: var(--gold);
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 15px 20px;
+            }
+            .content-box {
+                padding: 30px 20px;
+            }
+            .content-box h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <a href="index.html"><img src="imagens/LOGO ELO FINAL.png" alt="ELO"></a>
+        </div>
+        <nav>
+            <a href="sobre.html">Sobre</a>
+            <a href="seguranca.html">Segurança</a>
+            <a href="privacidade.html">Privacidade</a>
+            <a href="termos.html">Termos</a>
+        </nav>
+        <a href="login.html" class="btn-login">Entrar</a>
+    </header>
+
+    <div class="content-wrapper">
+        <div class="content-box">
+            <h1>Centro de Segurança</h1>
+            <p>Dicas para manter seu perfil seguro:</p>
+            <ul>
+                <li>Nunca forneça sua senha a terceiros.</li>
+                <li>Use senhas exclusivas e complexas.</li>
+                <li>Desconfie de links suspeitos ou 'scraps' pedindo dados pessoais.</li>
+                <li>O ELO nunca pedirá sua senha por e-mail.</li>
+            </ul>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2026 ELO - <a href="sobre.html">Sobre o ELO</a> - <a href="seguranca.html">Centro de Segurança</a> - <a href="privacidade.html">Privacidade</a> - <a href="termos.html">Termos</a> - <a href="login.html">Login</a>
+    </footer>
+
+</body>
+</html>
