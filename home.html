@@ -542,19 +542,24 @@
             isAdmin = perfil?.is_admin || false;
             const fullName = perfil?.nome_completo || user.user_metadata?.full_name || user.email;
             const firstName = fullName.split(' ')[0];
+            const avatarUrl = perfil?.avatar_url;
 
             document.getElementById('userName').textContent = fullName;
-            document.getElementById('userAvatar').textContent = firstName.charAt(0).toUpperCase();
+            
+            const avatarEl = document.getElementById('userAvatar');
+            if (avatarUrl) {
+                avatarEl.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            } else {
+                avatarEl.textContent = firstName.charAt(0).toUpperCase();
+            }
+            
             document.getElementById('welcomeTitle').textContent = `Olá, ${firstName}!`;
             document.getElementById('welcomeMessage').textContent = 'Bem-vindo ao ELO. Explore comunidades, faça conexões e compartilhe conhecimento.';
-
-            console.log('isAdmin:', isAdmin);
 
             if (isAdmin) {
                 document.getElementById('userBadge').classList.add('visible');
                 document.getElementById('adminSection').classList.add('visible');
                 document.querySelectorAll('.admin-delete').forEach(el => el.classList.add('visible'));
-                console.log('Admin menu ativado!');
             }
         }
 
