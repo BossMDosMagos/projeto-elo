@@ -447,43 +447,43 @@
             errorAlert.classList.remove('show');
 
             try {
-                let avatarUrl = null;
+                let avatarUrl = currentUser?.user_metadata?.avatar_url || null;
 
                 if (selectedFile) {
                     const fileExt = selectedFile.name.split('.').pop();
                     const fileName = `${currentUser.id}/avatar.${fileExt}`;
 
-                    console.log('Fazendo upload para:', fileName);
-
                     const { data: uploadData, error: uploadError } = await supabaseClient.storage
                         .from('avatars')
                         .upload(fileName, selectedFile, { upsert: true });
 
-                    console.log('Upload result:', uploadData, uploadError);
-
                     if (uploadError) {
-                        throw new Error('Erro no upload: ' + uploadError.message);
+                        console.error('Erro upload:', uploadError);
+                    } else {
+                        avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
                     }
-
-                    avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
-                    console.log('Avatar URL:', avatarUrl);
                 }
 
-                console.log('Salvando perfil com avatar_url:', avatarUrl);
+                const updateData = {
+                    nome_completo: document.getElementById('fullName').value,
+                    bio: document.getElementById('bio').value
+                };
+                
+                if (avatarUrl) {
+                    updateData.avatar_url = avatarUrl;
+                }
 
-                const { error: perfilError } = await supabaseClient
+                const { data: perfilData, error: perfilError } = await supabaseClient
                     .from('perfis')
-                    .update({
-                        nome_completo: document.getElementById('fullName').value,
-                        bio: document.getElementById('bio').value,
-                        avatar_url: avatarUrl
-                    })
-                    .eq('id', currentUser.id);
+                    .update(updateData)
+                    .eq('id', currentUser.id)
+                    .select()
+                    .single();
 
-                console.log('Perfil save result:', perfilError);
+                console.log('Perfil atualizado:', perfilData);
 
                 if (perfilError) {
-                    throw new Error('Erro ao salvar perfil: ' + perfilError.message);
+                    console.error('Erro perfil:', perfilError);
                 }
 
                 await supabaseClient.auth.updateUser({
