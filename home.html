@@ -458,10 +458,13 @@
                 return;
             }
 
-            const { data: topicos } = await supabaseClient.from('topicos')
-                .select('*, perfis(avatar_url, nome_completo), comentarios(count)')
+            const { data: topicos, error: topError } = await supabaseClient
+                .from('topicos')
+                .select('*, perfis(avatar_url, nome_completo)')
                 .eq('comunidade_id', id)
                 .order('criado_em', { ascending: false });
+
+            console.log('Tópicos:', topicos);
 
             const { data: membership } = await supabaseClient
                 .from('membros_comunidades')
@@ -534,11 +537,19 @@
             }
         }
 
-        function renderizarTopicos(topicos) {
+        async function renderizarTopicos(topicos) {
             const container = document.getElementById('topicsList');
             if (!topicos || topicos.length === 0) {
                 container.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>Ainda não há tesouros aqui</h3><p>Comece uma discussão e seja o primeiro a contribuir!</p></div>`;
                 return;
+            }
+
+            for (let t of topicos) {
+                const { count } = await supabaseClient
+                    .from('comentarios')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('topico_id', t.id);
+                t.commentCount = count || 0;
             }
 
             container.innerHTML = topicos.map(t => {
@@ -548,7 +559,7 @@
                 const initial = nome.charAt(0).toUpperCase();
                 const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
                 const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
-                const commentCount = t.comentarios?.[0]?.count || 0;
+                const commentCount = t.commentCount || 0;
 
                 return `
                     <div class="topic-card" onclick="abrirTopico('${t.id}')">
