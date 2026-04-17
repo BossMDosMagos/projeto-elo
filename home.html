@@ -509,13 +509,15 @@
         async function renderizarTopicos(topicos, comunidadeId) {
             const container = document.getElementById('topicsList');
             
-            const { data: topicosWithCount } = await supabaseClient
+            const { data: topicosList, error } = await supabaseClient
                 .from('topicos')
-                .select('*, perfis(avatar_url, nome_completo)')
+                .select('*')
                 .eq('comunidade_id', comunidadeId)
                 .order('criado_em', { ascending: false });
             
-            if (!topicosWithCount || topicosWithCount.length === 0) {
+            console.log('Tópicos:', topicosList, 'Erro:', error);
+            
+            if (error || !topicosList || topicosList.length === 0) {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="icon">📦</div>
@@ -526,12 +528,25 @@
             }
 
             let html = '';
-            for (let t of topicosWithCount) {
-                const perfil = t.perfis || {};
-                const avatar = perfil.avatar_url;
-                const nome = perfil.nome_completo || 'Usuário';
+            for (let t of topicosList) {
+                const autorId = t.autor_id;
+                let nome = 'Usuário';
+                let avatarUrl = null;
+                
+                if (autorId) {
+                    const { data: perfil } = await supabaseClient
+                        .from('perfis')
+                        .select('nome_completo, avatar_url')
+                        .eq('id', autorId)
+                        .single();
+                    if (perfil) {
+                        nome = perfil.nome_completo || 'Usuário';
+                        avatarUrl = perfil.avatar_url;
+                    }
+                }
+                
                 const initial = nome.charAt(0).toUpperCase();
-                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+                const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" alt="${nome}">` : initial;
                 const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
                 
                 const { count } = await supabaseClient
