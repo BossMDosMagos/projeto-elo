@@ -450,25 +450,29 @@
                 let avatarUrl = null;
 
                 if (selectedFile) {
-                    const fileExt = selectedFile.name.split('.').pop();
-                    const fileName = `${currentUser.id}/avatar.${fileExt}`;
+                    try {
+                        const fileExt = selectedFile.name.split('.').pop();
+                        const fileName = `${currentUser.id}/avatar.${fileExt}`;
 
-                    const { error: uploadError } = await supabaseClient.storage
-                        .from('avatars')
-                        .upload(fileName, selectedFile, { upsert: true });
+                        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                            .from('avatars')
+                            .upload(fileName, selectedFile, { upsert: true });
 
-                    if (uploadError) {
-                        throw new Error('Erro ao fazer upload da imagem');
+                        if (uploadError) {
+                            console.error('Erro upload:', uploadError);
+                            alert('Aviso: Não foi possível fazer upload da foto. Os outros dados serão salvos.');
+                        } else {
+                            const { data: urlData } = supabaseClient.storage
+                                .from('avatars')
+                                .getPublicUrl(fileName);
+                            avatarUrl = urlData.publicUrl;
+                        }
+                    } catch (uploadErr) {
+                        console.error('Erro no upload:', uploadErr);
                     }
-
-                    const { data: urlData } = supabaseClient.storage
-                        .from('avatars')
-                        .getPublicUrl(fileName);
-
-                    avatarUrl = urlData.publicUrl;
                 }
 
-                await supabaseClient
+                const { error: perfilError } = await supabaseClient
                     .from('perfis')
                     .upsert({
                         id: currentUser.id,
@@ -476,6 +480,10 @@
                         bio: document.getElementById('bio').value,
                         avatar_url: avatarUrl
                     }, { onConflict: 'id' });
+
+                if (perfilError) {
+                    throw new Error('Erro ao salvar perfil: ' + perfilError.message);
+                }
 
                 await supabaseClient.auth.updateUser({
                     data: { full_name: document.getElementById('fullName').value }
