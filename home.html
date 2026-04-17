@@ -460,7 +460,7 @@
 
             const { data: topicos, error: topError } = await supabaseClient
                 .from('topicos')
-                .select('*, perfis(avatar_url, nome_completo)')
+                .select('*')
                 .eq('comunidade_id', id)
                 .order('criado_em', { ascending: false });
 
@@ -604,10 +604,10 @@
         }
 
         async function abrirTopico(id) {
-            const { data: topico } = await supabaseClient.from('topicos').select('*, perfis(avatar_url, nome_completo)').eq('id', id).single();
+            const { data: topico } = await supabaseClient.from('topicos').select('*').eq('id', id).single();
             if (!topico) return;
 
-            const { data: comentarios } = await supabaseClient.from('comentarios').select('*, perfis(avatar_url, nome_completo)').eq('topico_id', id).order('criado_em', { ascending: true });
+            const { data: comentarios } = await supabaseClient.from('comentarios').select('*').eq('topico_id', id).order('criado_em', { ascending: true });
 
             const perfil = topico.perfis || {};
             const avatar = perfil.avatar_url;
