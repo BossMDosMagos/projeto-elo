@@ -89,6 +89,23 @@
         .empty-state h3 { color: #666; margin-bottom: 10px; }
         .empty-state p { font-size: 0.9rem; }
 
+        .btn-create { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 12px 25px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 25px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; }
+        .btn-create:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.4); }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.show { display: flex; }
+        .modal-content { background: var(--dark-box); border: 2px solid var(--gold); border-radius: 16px; padding: 40px; max-width: 500px; width: 90%; position: relative; }
+        .modal-close { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+        .modal-close:hover { color: var(--gold); }
+        .modal h2 { color: var(--gold); margin-bottom: 25px; font-size: 1.5rem; }
+        .modal .form-group { margin-bottom: 20px; }
+        .modal .form-group label { display: block; color: #888; font-size: 0.85rem; margin-bottom: 8px; }
+        .modal .form-group input, .modal .form-group textarea, .modal .form-group select { width: 100%; padding: 12px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 8px; font-size: 14px; }
+        .modal .form-group textarea { min-height: 80px; resize: vertical; }
+        .modal .form-group input:focus, .modal .form-group textarea:focus, .modal .form-group select:focus { border-color: var(--gold); outline: none; }
+        .modal .btn-save { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 14px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px; }
+        .modal .btn-save:hover { filter: brightness(1.1); }
+
         .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: none; text-align: center; }
         .alert.show { display: block; }
         .alert-success { background: rgba(50, 200, 50, 0.15); border: 1px solid rgba(50, 200, 50, 0.5); color: #50c850; }
@@ -147,6 +164,40 @@
         </nav>
 
         <main class="content-area" id="mainContent"></main>
+    </div>
+
+    <div class="modal" id="createCommunityModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <h2>🏘️ Criar Nova Comunidade</h2>
+            <form id="createCommunityForm">
+                <div class="form-group">
+                    <label>Nome da Comunidade *</label>
+                    <input type="text" id="communityName" placeholder="Ex: Música Clássica" required>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="communityDesc" placeholder="Qual o objetivo da comunidade?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>URL da Imagem de Capa</label>
+                    <input type="url" id="communityImage" placeholder="https://exemplo.com/imagem.jpg">
+                </div>
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="communityCategory">
+                        <option value="outros">Outros</option>
+                        <option value="musica">🎵 Música</option>
+                        <option value="dev">💻 Desenvolvimento</option>
+                        <option value="games">🎮 Games</option>
+                        <option value="filmes">🎬 Filmes</option>
+                        <option value="livros">📚 Livros</option>
+                        <option value="esportes">⚽ Esportes</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-save">Criar Comunidade</button>
+            </form>
+        </div>
     </div>
 
     <footer>
@@ -258,13 +309,22 @@
         }
 
         async function loadComunidades() {
-            document.getElementById('mainContent').innerHTML = `<div class="section-title"><span class="icon">👥</span> Comunidades</div><div id="communitiesList"></div><div id="communitiesGrid" class="communities-grid"></div>`;
+            document.getElementById('mainContent').innerHTML = `
+                <div class="section-title"><span class="icon">👥</span> Comunidades</div>
+                <button class="btn-create" onclick="openModal()">➕ Criar Nova Comunidade</button>
+                <div id="communitiesGrid" class="communities-grid"></div>
+            `;
             
-            const { data: comunidades } = await supabaseClient.from('comunidades').select('*').order('created_at', { ascending: false });
+            const { data: comunidades, error } = await supabaseClient.from('comunidades').select('*').order('created_at', { ascending: false });
             const grid = document.getElementById('communitiesGrid');
 
+            if (error) {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h3>Erro ao carregar</h3><p>${error.message}</p></div>`;
+                return;
+            }
+
             if (!comunidades || comunidades.length === 0) {
-                grid.innerHTML = `<div class="empty-state"><div class="icon">🏘️</div><h3>Nenhuma comunidade ainda</h3><p>Em breve, novas comunidades estarão disponíveis!</p></div>`;
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🏘️</div><h3>Nenhuma comunidade ainda</h3><p>Seja o primeiro a criar uma comunidade!</p></div>`;
                 return;
             }
 
@@ -279,6 +339,48 @@
                 </div>
             `).join('');
         }
+
+        function openModal() {
+            document.getElementById('createCommunityModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('createCommunityModal').classList.remove('show');
+        }
+
+        document.getElementById('createCommunityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nome = document.getElementById('communityName').value.trim();
+            const descricao = document.getElementById('communityDesc').value.trim();
+            const imagem_url = document.getElementById('communityImage').value.trim();
+            const categoria = document.getElementById('communityCategory').value;
+
+            if (!nome) {
+                alert('O nome da comunidade é obrigatório!');
+                return;
+            }
+
+            const icones = { musica: '🎵', dev: '💻', games: '🎮', filmes: '🎬', livros: '📚', esportes: '⚽' };
+            const icone = icones[categoria] || '👥';
+
+            const { error } = await supabaseClient.from('comunidades').insert({
+                nome: nome,
+                descricao: descricao,
+                imagem_url: imagem_url || null,
+                icone: icone,
+                categoria: categoria,
+                criado_por: currentUser.id
+            });
+
+            if (error) {
+                alert('Erro ao criar comunidade: ' + error.message);
+            } else {
+                closeModal();
+                document.getElementById('createCommunityForm').reset();
+                loadComunidades();
+            }
+        });
 
         async function loadRecados() {
             document.getElementById('mainContent').innerHTML = `
