@@ -312,6 +312,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="birthDate">Data de Nascimento</label>
+                    <input type="date" id="birthDate" style="width: 100%; padding: 12px 15px; background: #111; border: 1px solid #333; color: #fff; border-radius: 8px; font-size: 14px;">
+                </div>
+
+                <div class="form-group">
                     <label for="bio">Bio (apresentação)</label>
                     <textarea id="bio" placeholder="Conte um pouco sobre você..."></textarea>
                 </div>
@@ -359,12 +364,15 @@
 
             const { data: perfil } = await supabaseClient
                 .from('perfis')
-                .select('bio, avatar_url')
+                .select('bio, avatar_url, data_nascimento')
                 .eq('id', user.id)
                 .single();
 
             if (perfil) {
                 document.getElementById('bio').value = perfil.bio || '';
+                if (perfil.data_nascimento) {
+                    document.getElementById('birthDate').value = perfil.data_nascimento;
+                }
                 if (perfil.avatar_url) {
                     document.getElementById('avatarPreview').innerHTML = `<img src="${perfil.avatar_url}" alt="Avatar">`;
                 }
@@ -466,7 +474,8 @@
 
                 const updateData = {
                     nome_completo: document.getElementById('fullName').value,
-                    bio: document.getElementById('bio').value
+                    bio: document.getElementById('bio').value,
+                    data_nascimento: document.getElementById('birthDate').value || null
                 };
                 
                 if (avatarUrl) {
