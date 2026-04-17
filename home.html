@@ -609,22 +609,35 @@
 
             const { data: comentarios } = await supabaseClient.from('comentarios').select('*').eq('topico_id', id).order('criado_em', { ascending: true });
 
-            const perfil = topico.perfis || {};
-            const avatar = perfil.avatar_url;
-            const nome = perfil.nome_completo || 'Usuário';
-            const initial = nome.charAt(0).toUpperCase();
-            const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+            let autorNome = 'Usuário';
+            let autorAvatar = null;
+            if (topico.autor_id) {
+                const { data: autor } = await supabaseClient.from('perfis').select('nome_completo, avatar_url').eq('id', topico.autor_id).single();
+                if (autor) {
+                    autorNome = autor.nome_completo || 'Usuário';
+                    autorAvatar = autor.avatar_url;
+                }
+            }
+            const autorInitial = autorNome.charAt(0).toUpperCase();
+            const autorAvatarHtml = autorAvatar ? `<img src="${autorAvatar}" alt="${autorNome}">` : autorInitial;
             const time = new Date(topico.criado_em).toLocaleDateString('pt-BR');
 
-            const commentsHtml = comentarios && comentarios.length > 0 
-                ? comentarios.map(c => {
-                    const cPerfil = c.perfis || {};
-                    const cAvatar = cPerfil.avatar_url;
-                    const cNome = cPerfil.nome_completo || 'Usuário';
+            let commentsHtml = '';
+            if (comentarios && comentarios.length > 0) {
+                for (let c of comentarios) {
+                    let cNome = 'Usuário';
+                    let cAvatar = null;
+                    if (c.autor_id) {
+                        const { data: cAutor } = await supabaseClient.from('perfis').select('nome_completo, avatar_url').eq('id', c.autor_id).single();
+                        if (cAutor) {
+                            cNome = cAutor.nome_completo || 'Usuário';
+                            cAvatar = cAutor.avatar_url;
+                        }
+                    }
                     const cInitial = cNome.charAt(0).toUpperCase();
                     const cAvatarHtml = cAvatar ? `<img src="${cAvatar}" alt="${cNome}">` : cInitial;
                     const cTime = new Date(c.criado_em).toLocaleDateString('pt-BR');
-                    return `
+                    commentsHtml += `
                         <div class="comment">
                             <div class="comment-avatar">${cAvatarHtml}</div>
                             <div class="comment-content">
@@ -634,17 +647,19 @@
                             </div>
                         </div>
                     `;
-                }).join('') 
-                : '<p style="color: #555;">Nenhum comentário ainda.</p>';
+                }
+            } else {
+                commentsHtml = '<p style="color: #555;">Nenhum comentário ainda.</p>';
+            }
 
             document.getElementById('mainContent').innerHTML = `
                 <a class="back-link" onclick="abrirComunidade('${topico.comunidade_id}'); return false;">← Voltar para Comunidade</a>
                 <div class="topic-detail">
                     <div class="topic-header">
-                        <div class="topic-avatar" style="width:50px;height:50px;font-size:20px;">${avatarHtml}</div>
+                        <div class="topic-avatar" style="width:50px;height:50px;font-size:20px;">${autorAvatarHtml}</div>
                         <div class="topic-meta">
                             <div class="topic-title" style="font-size:1.3rem;">${topico.titulo}</div>
-                            <div class="topic-author">Por ${nome} • ${time}</div>
+                            <div class="topic-author">Por ${autorNome} • ${time}</div>
                         </div>
                     </div>
                     <div class="topic-detail-content">${topico.conteudo || ''}</div>
