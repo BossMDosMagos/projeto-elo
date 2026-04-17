@@ -503,7 +503,58 @@
                 <div id="topicsList" class="topics-list"></div>
             `;
 
-            renderizarTopicos(topicos);
+            renderizarTopicos(topicos, id);
+        }
+
+        async function renderizarTopicos(topicos, comunidadeId) {
+            const container = document.getElementById('topicsList');
+            
+            const { data: topicosWithCount } = await supabaseClient
+                .from('topicos')
+                .select('*, perfis(avatar_url, nome_completo)')
+                .eq('comunidade_id', comunidadeId)
+                .order('criado_em', { ascending: false });
+            
+            if (!topicosWithCount || topicosWithCount.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📦</div>
+                        <h3>Ainda não há tesouros aqui</h3>
+                        <p>Comece uma discussão e seja o primeiro a contribuir!</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            for (let t of topicosWithCount) {
+                const perfil = t.perfis || {};
+                const avatar = perfil.avatar_url;
+                const nome = perfil.nome_completo || 'Usuário';
+                const initial = nome.charAt(0).toUpperCase();
+                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+                const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
+                
+                const { count } = await supabaseClient
+                    .from('comentarios')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('topico_id', t.id);
+                const commentCount = count || 0;
+
+                html += `
+                    <div class="topic-card" onclick="abrirTopico('${t.id}')">
+                        <div class="topic-header">
+                            <div class="topic-avatar">${avatarHtml}</div>
+                            <div class="topic-meta">
+                                <div class="topic-title">${t.titulo}</div>
+                                <div class="topic-author">Postado por ${nome} • ${time}</div>
+                            </div>
+                        </div>
+                        ${t.conteudo ? `<div class="topic-content">${t.conteudo.substring(0, 150)}${t.conteudo.length > 150 ? '...' : ''}</div>` : ''}
+                        <div class="topic-stats">💬 ${commentCount} resposta${commentCount !== 1 ? 's' : ''}</div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
         }
 
         async function participarComunidade(id) {
@@ -535,46 +586,6 @@
                 showToast('Você saiu da comunidade', 'info');
                 loadComunidades();
             }
-        }
-
-        async function renderizarTopicos(topicos) {
-            const container = document.getElementById('topicsList');
-            if (!topicos || topicos.length === 0) {
-                container.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>Ainda não há tesouros aqui</h3><p>Comece uma discussão e seja o primeiro a contribuir!</p></div>`;
-                return;
-            }
-
-            for (let t of topicos) {
-                const { count } = await supabaseClient
-                    .from('comentarios')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('topico_id', t.id);
-                t.commentCount = count || 0;
-            }
-
-            container.innerHTML = topicos.map(t => {
-                const perfil = t.perfis || {};
-                const avatar = perfil.avatar_url;
-                const nome = perfil.nome_completo || 'Usuário';
-                const initial = nome.charAt(0).toUpperCase();
-                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
-                const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
-                const commentCount = t.commentCount || 0;
-
-                return `
-                    <div class="topic-card" onclick="abrirTopico('${t.id}')">
-                        <div class="topic-header">
-                            <div class="topic-avatar">${avatarHtml}</div>
-                            <div class="topic-meta">
-                                <div class="topic-title">${t.titulo}</div>
-                                <div class="topic-author">Postado por ${nome} • ${time}</div>
-                            </div>
-                        </div>
-                        ${t.conteudo ? `<div class="topic-content">${t.conteudo.substring(0, 150)}${t.conteudo.length > 150 ? '...' : ''}</div>` : ''}
-                        <div class="topic-stats">💬 ${commentCount} resposta${commentCount !== 1 ? 's' : ''}</div>
-                    </div>
-                `;
-            }).join('');
         }
 
         async function abrirTopico(id) {
