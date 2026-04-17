@@ -62,6 +62,8 @@
         .community-info p { color: #666; font-size: 0.85rem; margin-bottom: 15px; }
         .btn-participate { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; transition: all 0.3s; }
         .btn-participate:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .btn-participating { background: linear-gradient(180deg, #2a5a2a, #1a3a1a); color: #6f6; border: 1px solid #4a4; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+        .btn-participating:hover { filter: brightness(1.2); transform: scale(1.05); }
 
         .feed-list { display: flex; flex-direction: column; gap: 20px; }
         .scrap-card { background: var(--dark-box); border: var(--border-style); border-radius: 12px; padding: 25px; position: relative; }
@@ -113,8 +115,12 @@
         .community-header h1 { color: var(--gold); font-size: 1.8rem; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
         .community-header p { color: #888; font-size: 0.95rem; line-height: 1.5; }
         .community-actions { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-join { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .btn-join { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .btn-join:hover { filter: brightness(1.1); transform: scale(1.05); }
+        .btn-leave { background: transparent; border: 1px solid #c00; color: #c00; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; transition: all 0.3s; }
+        .btn-leave:hover { background: #c00; color: #fff; }
         .btn-manage { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 10px 25px; border-radius: 20px; cursor: pointer; }
+        .btn-manage:hover { background: var(--gold); color: #000; }
 
         .members-preview { display: flex; gap: 10px; margin-top: 15px; }
         .member-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 14px; overflow: hidden; }
@@ -408,6 +414,12 @@
             `;
             
             const { data: comunidades, error } = await supabaseClient.from('comunidades').select('*').order('created_at', { ascending: false });
+            const { data: memberships } = await supabaseClient
+                .from('membros_comunidades')
+                .select('comunidade_id')
+                .eq('usuario_id', currentUser.id);
+            
+            const participatingIds = memberships?.map(m => m.comunidade_id) || [];
             const grid = document.getElementById('communitiesGrid');
 
             if (error) {
@@ -420,16 +432,23 @@
                 return;
             }
 
-            grid.innerHTML = comunidades.map(c => `
-                <div class="community-card" onclick="abrirComunidade('${c.id}')" style="cursor:pointer;">
-                    <div class="community-cover">${c.icone || '👥'}</div>
-                    <div class="community-info">
-                        <h3>${c.nome}</h3>
-                        <p>${c.descricao || ''}</p>
-                        <button class="btn-participate" onclick="event.stopPropagation(); participarComunidade('${c.id}')">Participar</button>
+            grid.innerHTML = comunidades.map(c => {
+                const isParticipating = participatingIds.includes(c.id);
+                const btnClass = isParticipating ? 'btn-participating' : 'btn-participate';
+                const btnText = isParticipating ? '✓ Participando' : 'Participar';
+                const btnAction = isParticipating ? `abrirComunidade('${c.id}')` : `participarComunidade('${c.id}')`;
+                
+                return `
+                    <div class="community-card" onclick="${btnAction}" style="cursor:pointer;">
+                        <div class="community-cover">${c.icone || '👥'}</div>
+                        <div class="community-info">
+                            <h3>${c.nome}</h3>
+                            <p>${c.descricao || ''}</p>
+                            <button class="${btnClass}" onclick="event.stopPropagation(); ${isParticipating ? `abrirComunidade('${c.id}')` : `participarComunidade('${c.id}')`}">${btnText}</button>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function abrirComunidade(id) {
@@ -444,9 +463,22 @@
                 .eq('comunidade_id', id)
                 .order('criado_em', { ascending: false });
 
+            const { data: membership } = await supabaseClient
+                .from('membros_comunidades')
+                .select('*')
+                .eq('comunidade_id', id)
+                .eq('usuario_id', currentUser.id)
+                .single();
+
+            const isParticipating = !!membership;
             const isCreator = comunidade.criado_por && comunidade.criado_por === currentUser.id;
             const canManage = isAdmin || isCreator;
             const bannerHtml = comunidade.imagem_url ? `<img src="${comunidade.imagem_url}" alt="${comunidade.nome}">` : comunidade.icone || '👥';
+
+            const joinBtnClass = isParticipating ? 'btn-leave' : 'btn-join';
+            const joinBtnText = isParticipating ? '🚪 Sair da Comunidade' : '✓ Participar';
+            const joinBtnAction = isParticipating ? `sairComunidade('${id}')` : `participarComunidade('${id}')`;
+
             const manageBtn = canManage ? `<button class="btn-manage" onclick="event.stopPropagation()">🛠️ Gerenciar</button>` : '';
 
             document.getElementById('mainContent').innerHTML = `
@@ -458,17 +490,48 @@
                         <p>${comunidade.descricao || ''}</p>
                         <div class="members-preview" id="membersPreview"></div>
                         <div class="community-actions">
-                            <button class="btn-join" onclick="participarComunidade('${id}')">✓ Participando</button>
+                            <button class="${joinBtnClass}" onclick="${joinBtnAction}">${joinBtnText}</button>
                             ${manageBtn}
                         </div>
                     </div>
                 </div>
-                <button class="btn-create-topic" onclick="openTopicModal('${id}')">➕ Criar Tópico</button>
+                ${isParticipating ? `<button class="btn-create-topic" onclick="openTopicModal('${id}')">➕ Criar Tópico</button>` : '<div class="alert" style="background:rgba(212,175,55,0.1);border:1px solid var(--gold);padding:15px;border-radius:8px;margin-bottom:25px;text-align:center;">💡 Participe da comunidade para criar tópicos e interagir!</div>'}
                 <div class="section-title"><span class="icon">💬</span> Tópicos da Comunidade</div>
                 <div id="topicsList" class="topics-list"></div>
             `;
 
             renderizarTopicos(topicos);
+        }
+
+        async function participarComunidade(id) {
+            const { error } = await supabaseClient.from('membros_comunidades').insert({
+                comunidade_id: id,
+                usuario_id: currentUser.id
+            });
+
+            if (error) {
+                showToast('Erro ao participar', 'error');
+            } else {
+                showToast('Você agora é membro desta comunidade!', 'success');
+                abrirComunidade(id);
+            }
+        }
+
+        async function sairComunidade(id) {
+            if (!confirm('Tem certeza que deseja sair desta comunidade?')) return;
+
+            const { error } = await supabaseClient
+                .from('membros_comunidades')
+                .delete()
+                .eq('comunidade_id', id)
+                .eq('usuario_id', currentUser.id);
+
+            if (error) {
+                showToast('Erro ao sair', 'error');
+            } else {
+                showToast('Você saiu da comunidade', 'info');
+                loadComunidades();
+            }
         }
 
         function renderizarTopicos(topicos) {
@@ -581,10 +644,6 @@
         function closeTopicModal() {
             document.getElementById('createTopicModal').classList.remove('show');
             document.getElementById('createTopicForm').reset();
-        }
-
-        async function participarComunidade(id) {
-            abrirComunidade(id);
         }
 
         document.getElementById('createTopicForm').addEventListener('submit', async (e) => {
