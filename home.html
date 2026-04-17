@@ -106,6 +106,51 @@
         .modal .btn-save { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 14px 35px; border-radius: 25px; font-weight: bold; cursor: pointer; width: 100%; font-size: 15px; }
         .modal .btn-save:hover { filter: brightness(1.1); }
 
+        .community-header { position: relative; background: var(--dark-box); border: var(--border-style); border-radius: 12px; overflow: hidden; margin-bottom: 25px; }
+        .community-banner { height: 180px; background: linear-gradient(135deg, var(--gold) 0%, #1a1a1a 100%); display: flex; align-items: center; justify-content: center; font-size: 5rem; }
+        .community-banner img { width: 100%; height: 100%; object-fit: cover; }
+        .community-header-content { padding: 25px; }
+        .community-header h1 { color: var(--gold); font-size: 1.8rem; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; }
+        .community-header p { color: #888; font-size: 0.95rem; line-height: 1.5; }
+        .community-actions { display: flex; gap: 12px; margin-top: 20px; }
+        .btn-join { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 10px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+        .btn-manage { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 10px 25px; border-radius: 20px; cursor: pointer; }
+
+        .members-preview { display: flex; gap: 10px; margin-top: 15px; }
+        .member-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 14px; overflow: hidden; }
+        .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .topics-list { display: flex; flex-direction: column; gap: 15px; }
+        .topic-card { background: var(--dark-box); border: var(--border-style); border-radius: 12px; padding: 20px; cursor: pointer; transition: all 0.3s; }
+        .topic-card:hover { border-color: var(--gold); transform: translateX(5px); }
+        .topic-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .topic-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; overflow: hidden; }
+        .topic-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .topic-meta { flex: 1; }
+        .topic-title { color: var(--gold); font-weight: bold; font-size: 1rem; margin-bottom: 3px; }
+        .topic-author { color: #555; font-size: 0.8rem; }
+        .topic-content { color: #aaa; font-size: 0.9rem; line-height: 1.5; }
+        .btn-create-topic { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 25px; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-create-topic:hover { filter: brightness(1.1); }
+
+        .topic-detail { background: var(--dark-box); border: var(--border-style); border-radius: 12px; padding: 30px; margin-bottom: 25px; }
+        .topic-detail h2 { color: var(--gold); font-size: 1.5rem; margin-bottom: 20px; }
+        .topic-detail-content { color: #ccc; line-height: 1.8; font-size: 1rem; }
+        .comments-section { margin-top: 30px; }
+        .comments-section h3 { color: var(--gold); margin-bottom: 15px; font-size: 1.1rem; }
+        .comment { display: flex; gap: 15px; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .comment-avatar { width: 35px; height: 35px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 14px; overflow: hidden; flex-shrink: 0; }
+        .comment-content { flex: 1; }
+        .comment-author { color: var(--gold); font-weight: bold; font-size: 0.9rem; }
+        .comment-text { color: #ccc; font-size: 0.9rem; margin-top: 5px; line-height: 1.5; }
+        .comment-time { color: #555; font-size: 0.75rem; margin-top: 5px; }
+        .new-comment { margin-top: 20px; display: flex; gap: 12px; }
+        .new-comment textarea { flex: 1; padding: 12px; background: #111; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 14px; min-height: 60px; resize: vertical; }
+        .new-comment button { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 12px 25px; border-radius: 20px; font-weight: bold; cursor: pointer; }
+
+        .back-link { color: var(--gold); text-decoration: none; font-size: 0.9rem; margin-bottom: 20px; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+        .back-link:hover { text-shadow: 0 0 10px rgba(212, 175, 55, 0.5); }
+
         .alert { padding: 15px 20px; border-radius: 8px; margin-bottom: 20px; display: none; text-align: center; }
         .alert.show { display: block; }
         .alert-success { background: rgba(50, 200, 50, 0.15); border: 1px solid rgba(50, 200, 50, 0.5); color: #50c850; }
@@ -196,6 +241,24 @@
                     </select>
                 </div>
                 <button type="submit" class="btn-save">Criar Comunidade</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="createTopicModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTopicModal()">&times;</button>
+            <h2>💬 Criar Novo Tópico</h2>
+            <form id="createTopicForm">
+                <div class="form-group">
+                    <label>Título do Tópico *</label>
+                    <input type="text" id="topicTitle" placeholder="Qual o assunto?" required>
+                </div>
+                <div class="form-group">
+                    <label>Conteúdo</label>
+                    <textarea id="topicContent" placeholder="Descreva sua dúvida ou topic..."></textarea>
+                </div>
+                <button type="submit" class="btn-save">Criar Tópico</button>
             </form>
         </div>
     </div>
@@ -329,16 +392,178 @@
             }
 
             grid.innerHTML = comunidades.map(c => `
-                <div class="community-card">
+                <div class="community-card" onclick="abrirComunidade('${c.id}')" style="cursor:pointer;">
                     <div class="community-cover">${c.icone || '👥'}</div>
                     <div class="community-info">
                         <h3>${c.nome}</h3>
                         <p>${c.descricao || ''}</p>
-                        <button class="btn-participate" onclick="participarComunidade('${c.id}')">Participar</button>
+                        <button class="btn-participate" onclick="event.stopPropagation(); participarComunidade('${c.id}')">Participar</button>
                     </div>
                 </div>
             `).join('');
         }
+
+        async function abrirComunidade(id) {
+            const { data: comunidade, error } = await supabaseClient.from('comunidades').select('*').eq('id', id).single();
+            if (error || !comunidade) return;
+
+            const { data: topicos } = await supabaseClient.from('topicos').select('*, perfis(avatar_url, nome_completo)').eq('comunidade_id', id).order('criado_em', { ascending: false });
+
+            const isCreator = comunidade.criado_por === currentUser.id;
+            const canManage = isAdmin || isCreator;
+            const bannerHtml = comunidade.imagem_url ? `<img src="${comunidade.imagem_url}" alt="${comunidade.nome}">` : comunidade.icone || '👥';
+            const manageBtn = canManage ? `<button class="btn-manage" onclick="event.stopPropagation()">🛠️ Gerenciar</button>` : '';
+
+            document.getElementById('mainContent').innerHTML = `
+                <a class="back-link" onclick="loadComunidades(); return false;">← Voltar para Comunidades</a>
+                <div class="community-header" onclick="return false;">
+                    <div class="community-banner">${bannerHtml}</div>
+                    <div class="community-header-content">
+                        <h1>${comunidade.icone || ''} ${comunidade.nome}</h1>
+                        <p>${comunidade.descricao || ''}</p>
+                        <div class="members-preview" id="membersPreview"></div>
+                        <div class="community-actions">
+                            <button class="btn-join" onclick="participarComunidade('${id}')">✓ Participando</button>
+                            ${manageBtn}
+                        </div>
+                    </div>
+                </div>
+                <button class="btn-create-topic" onclick="openTopicModal('${id}')">➕ Criar Tópico</button>
+                <div class="section-title"><span class="icon">💬</span> Tópicos da Comunidade</div>
+                <div id="topicsList" class="topics-list"></div>
+            `;
+
+            renderizarTopicos(topicos);
+        }
+
+        function renderizarTopicos(topicos) {
+            const container = document.getElementById('topicsList');
+            if (!topicos || topicos.length === 0) {
+                container.innerHTML = `<div class="empty-state"><div class="icon">🌙</div><h3>O silêncio reina aqui...</h3><p>Seja o primeiro a iniciar uma discussão!</p></div>`;
+                return;
+            }
+
+            container.innerHTML = topicos.map(t => {
+                const perfil = t.perfis || {};
+                const avatar = perfil.avatar_url;
+                const nome = perfil.nome_completo || 'Usuário';
+                const initial = nome.charAt(0).toUpperCase();
+                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+                const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
+
+                return `
+                    <div class="topic-card" onclick="abrirTopico('${t.id}')">
+                        <div class="topic-header">
+                            <div class="topic-avatar">${avatarHtml}</div>
+                            <div class="topic-meta">
+                                <div class="topic-title">${t.titulo}</div>
+                                <div class="topic-author">Por ${nome} • ${time}</div>
+                            </div>
+                        </div>
+                        ${t.conteudo ? `<div class="topic-content">${t.conteudo.substring(0, 150)}${t.conteudo.length > 150 ? '...' : ''}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function abrirTopico(id) {
+            const { data: topico } = await supabaseClient.from('topicos').select('*, perfis(avatar_url, nome_completo)').eq('id', id).single();
+            if (!topico) return;
+
+            const { data: comentarios } = await supabaseClient.from('comentarios').select('*, perfis(avatar_url, nome_completo)').eq('topico_id', id).order('criado_em', { ascending: true });
+
+            const perfil = topico.perfis || {};
+            const avatar = perfil.avatar_url;
+            const nome = perfil.nome_completo || 'Usuário';
+            const initial = nome.charAt(0).toUpperCase();
+            const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+            const time = new Date(topico.criado_em).toLocaleDateString('pt-BR');
+
+            const commentsHtml = comentarios && comentarios.length > 0 
+                ? comentarios.map(c => {
+                    const cPerfil = c.perfis || {};
+                    const cAvatar = cPerfil.avatar_url;
+                    const cNome = cPerfil.nome_completo || 'Usuário';
+                    const cInitial = cNome.charAt(0).toUpperCase();
+                    const cAvatarHtml = cAvatar ? `<img src="${cAvatar}" alt="${cNome}">` : cInitial;
+                    const cTime = new Date(c.criado_em).toLocaleDateString('pt-BR');
+                    return `
+                        <div class="comment">
+                            <div class="comment-avatar">${cAvatarHtml}</div>
+                            <div class="comment-content">
+                                <div class="comment-author">${cNome}</div>
+                                <div class="comment-text">${c.texto}</div>
+                                <div class="comment-time">${cTime}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('') 
+                : '<p style="color: #555;">Nenhum comentário ainda.</p>';
+
+            document.getElementById('mainContent').innerHTML = `
+                <a class="back-link" onclick="abrirComunidade('${topico.comunidade_id}'); return false;">← Voltar para Comunidade</a>
+                <div class="topic-detail">
+                    <div class="topic-header">
+                        <div class="topic-avatar" style="width:50px;height:50px;font-size:20px;">${avatarHtml}</div>
+                        <div class="topic-meta">
+                            <div class="topic-title" style="font-size:1.3rem;">${topico.titulo}</div>
+                            <div class="topic-author">Por ${nome} • ${time}</div>
+                        </div>
+                    </div>
+                    <div class="topic-detail-content">${topico.conteudo || ''}</div>
+                </div>
+                <div class="comments-section">
+                    <h3>💬 Comentários (${comentarios?.length || 0})</h3>
+                    <div id="commentsList">${commentsHtml}</div>
+                    <div class="new-comment">
+                        <textarea id="newCommentText" placeholder="Escreva um comentário..."></textarea>
+                        <button onclick="postarComentario('${id}')">Enviar</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function postarComentario(topicoId) {
+            const texto = document.getElementById('newCommentText').value.trim();
+            if (!texto) return;
+
+            await supabaseClient.from('comentarios').insert({
+                topico_id: topicoId,
+                autor_id: currentUser.id,
+                texto: texto
+            });
+
+            abrirTopico(topicoId);
+        }
+
+        function openTopicModal(communityId) {
+            document.getElementById('createTopicModal').setAttribute('data-community', communityId);
+            document.getElementById('createTopicModal').classList.add('show');
+        }
+
+        function closeTopicModal() {
+            document.getElementById('createTopicModal').classList.remove('show');
+            document.getElementById('createTopicForm').reset();
+        }
+
+        document.getElementById('createTopicForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const communityId = document.getElementById('createTopicModal').getAttribute('data-community');
+            const titulo = document.getElementById('topicTitle').value.trim();
+            const conteudo = document.getElementById('topicContent').value.trim();
+
+            if (!titulo) return;
+
+            await supabaseClient.from('topicos').insert({
+                comunidade_id: communityId,
+                autor_id: currentUser.id,
+                titulo: titulo,
+                conteudo: conteudo
+            });
+
+            closeTopicModal();
+            abrirComunidade(communityId);
+        });
 
         function openModal() {
             document.getElementById('createCommunityModal').classList.add('show');
