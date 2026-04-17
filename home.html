@@ -509,22 +509,24 @@
         let isAdmin = false;
 
         async function ensureProfile(user) {
-            const { data: perfil } = await supabaseClient
+            const { data: perfil, error } = await supabaseClient
                 .from('perfis')
                 .select('*')
                 .eq('id', user.id)
                 .single();
 
-            if (!perfil) {
+            if (error || !perfil) {
                 const fullName = user.user_metadata?.full_name || user.email;
-                await supabaseClient
+                const { data: newPerfil } = await supabaseClient
                     .from('perfis')
                     .insert({
                         id: user.id,
                         nome_completo: fullName,
                         is_admin: false
-                    });
-                return { is_admin: false, nome_completo: fullName };
+                    })
+                    .select()
+                    .single();
+                return newPerfil || { is_admin: false, nome_completo: fullName };
             }
             return perfil;
         }
@@ -539,15 +541,17 @@
 
             let perfil = await ensureProfile(user);
             
+            console.log('Perfil:', perfil);
+            
             isAdmin = perfil?.is_admin || false;
             const fullName = perfil?.nome_completo || user.user_metadata?.full_name || user.email;
             const firstName = fullName.split(' ')[0];
-            const avatarUrl = perfil?.avatar_url;
+            const avatarUrl = perfil?.avatar_url || null;
 
             document.getElementById('userName').textContent = fullName;
             
             const avatarEl = document.getElementById('userAvatar');
-            if (avatarUrl) {
+            if (avatarUrl && avatarUrl.trim() !== '') {
                 avatarEl.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
             } else {
                 avatarEl.textContent = firstName.charAt(0).toUpperCase();
