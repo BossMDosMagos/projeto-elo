@@ -404,12 +404,17 @@
         }
 
         async function abrirComunidade(id) {
+            console.log('Abrindo comunidade:', id);
             const { data: comunidade, error } = await supabaseClient.from('comunidades').select('*').eq('id', id).single();
-            if (error || !comunidade) return;
+            console.log('Comunidade:', comunidade, 'Erro:', error);
+            if (error || !comunidade) {
+                alert('Erro ao abrir comunidade: ' + (error?.message || 'não encontrada'));
+                return;
+            }
 
             const { data: topicos } = await supabaseClient.from('topicos').select('*, perfis(avatar_url, nome_completo)').eq('comunidade_id', id).order('criado_em', { ascending: false });
 
-            const isCreator = comunidade.criado_por === currentUser.id;
+            const isCreator = comunidade.criado_por && comunidade.criado_por === currentUser.id;
             const canManage = isAdmin || isCreator;
             const bannerHtml = comunidade.imagem_url ? `<img src="${comunidade.imagem_url}" alt="${comunidade.nome}">` : comunidade.icone || '👥';
             const manageBtn = canManage ? `<button class="btn-manage" onclick="event.stopPropagation()">🛠️ Gerenciar</button>` : '';
