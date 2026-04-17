@@ -129,7 +129,8 @@
         .topic-meta { flex: 1; }
         .topic-title { color: var(--gold); font-weight: bold; font-size: 1rem; margin-bottom: 3px; }
         .topic-author { color: #555; font-size: 0.8rem; }
-        .topic-content { color: #aaa; font-size: 0.9rem; line-height: 1.5; }
+        .topic-content { color: #aaa; font-size: 0.9rem; line-height: 1.5; margin-bottom: 10px; }
+        .topic-stats { display: flex; gap: 20px; color: #555; font-size: 0.8rem; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05); }
         .btn-create-topic { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 12px 30px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 14px; margin-bottom: 25px; display: inline-flex; align-items: center; gap: 8px; }
         .btn-create-topic:hover { filter: brightness(1.1); }
 
@@ -432,15 +433,16 @@
         }
 
         async function abrirComunidade(id) {
-            console.log('Abrindo comunidade:', id);
             const { data: comunidade, error } = await supabaseClient.from('comunidades').select('*').eq('id', id).single();
-            console.log('Comunidade:', comunidade, 'Erro:', error);
             if (error || !comunidade) {
                 showToast('Erro ao abrir comunidade', 'error');
                 return;
             }
 
-            const { data: topicos } = await supabaseClient.from('topicos').select('*, perfis(avatar_url, nome_completo)').eq('comunidade_id', id).order('criado_em', { ascending: false });
+            const { data: topicos } = await supabaseClient.from('topicos')
+                .select('*, perfis(avatar_url, nome_completo), comentarios(count)')
+                .eq('comunidade_id', id)
+                .order('criado_em', { ascending: false });
 
             const isCreator = comunidade.criado_por && comunidade.criado_por === currentUser.id;
             const canManage = isAdmin || isCreator;
@@ -483,6 +485,7 @@
                 const initial = nome.charAt(0).toUpperCase();
                 const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
                 const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
+                const commentCount = t.comentarios?.[0]?.count || 0;
 
                 return `
                     <div class="topic-card" onclick="abrirTopico('${t.id}')">
@@ -490,10 +493,11 @@
                             <div class="topic-avatar">${avatarHtml}</div>
                             <div class="topic-meta">
                                 <div class="topic-title">${t.titulo}</div>
-                                <div class="topic-author">Por ${nome} • ${time}</div>
+                                <div class="topic-author">Postado por ${nome} • ${time}</div>
                             </div>
                         </div>
                         ${t.conteudo ? `<div class="topic-content">${t.conteudo.substring(0, 150)}${t.conteudo.length > 150 ? '...' : ''}</div>` : ''}
+                        <div class="topic-stats">💬 ${commentCount} resposta${commentCount !== 1 ? 's' : ''}</div>
                     </div>
                 `;
             }).join('');
@@ -589,17 +593,25 @@
             const titulo = document.getElementById('topicTitle').value.trim();
             const conteudo = document.getElementById('topicContent').value.trim();
 
-            if (!titulo) return;
+            if (!titulo) {
+                showToast('O título do tópico é obrigatório!', 'info');
+                return;
+            }
 
-            await supabaseClient.from('topicos').insert({
+            const { error } = await supabaseClient.from('topicos').insert({
                 comunidade_id: communityId,
                 autor_id: currentUser.id,
                 titulo: titulo,
                 conteudo: conteudo
             });
 
-            closeTopicModal();
-            abrirComunidade(communityId);
+            if (error) {
+                showToast('Erro ao criar tópico', 'error');
+            } else {
+                showToast('Tópico criado com sucesso!', 'success');
+                closeTopicModal();
+                abrirComunidade(communityId);
+            }
         });
 
         function openModal() {
