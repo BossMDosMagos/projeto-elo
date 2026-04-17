@@ -551,6 +551,10 @@
             document.getElementById('createTopicForm').reset();
         }
 
+        async function participarComunidade(id) {
+            alert('Você agora está participando desta comunidade!');
+        }
+
         document.getElementById('createTopicForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const communityId = document.getElementById('createTopicModal').getAttribute('data-community');
