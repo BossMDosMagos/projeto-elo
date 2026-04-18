@@ -1030,19 +1030,6 @@
                 showToast('Erro ao postar comentário', 'error');
             }
         }
-            const texto = input.value.trim();
-            if (!texto) return;
-
-            await supabaseClient.from('comentarios_recados').insert({
-                recado_id: recadoId,
-                autor_id: currentUser.id,
-                conteudo: texto
-            });
-
-            input.value = '';
-            await carregarComentariosRecado(recadoId);
-            showToast('Comentário adicionado!', 'success');
-        }
 
         async function deleteScrap(id) {
             if (!confirm('Tem certeza que deseja apagar este recado?')) return;
