@@ -184,6 +184,26 @@
         .toast-error { background: linear-gradient(135deg, rgba(180, 50, 50, 0.95), rgba(120, 30, 30, 0.95)); color: #fff; border-left: 4px solid #ff6b6b; }
         .toast-info { background: linear-gradient(135deg, rgba(50, 150, 200, 0.95), rgba(30, 100, 150, 0.95)); color: #fff; border-left: 4px solid #6bc5ff; }
         .toast-icon { font-size: 20px; }
+
+        .scrap-like-btn { background: none; border: none; color: #555; font-size: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 15px; }
+        .scrap-like-btn:hover { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
+        .scrap-like-btn.liked { color: #ff4757; }
+        .scrap-like-btn.liked .heart-icon { fill: #ff4757; stroke: #ff4757; }
+        .heart-icon { width: 16px; height: 16px; }
+
+        .scrap-comments { margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .comments-container { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .comment-scrap { display: flex; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .comment-scrap-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #000; font-size: 12px; overflow: hidden; flex-shrink: 0; }
+        .comment-scrap-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+        .comment-scrap-content { flex: 1; min-width: 0; }
+        .comment-scrap-author { color: var(--gold); font-weight: bold; font-size: 0.8rem; }
+        .comment-scrap-text { color: #aaa; font-size: 0.85rem; margin-top: 3px; line-height: 1.4; }
+        .comment-scrap-time { color: #555; font-size: 0.7rem; margin-top: 3px; }
+        .comment-form { display: flex; gap: 10px; margin-top: 10px; }
+        .comment-form textarea { flex: 1; padding: 8px 12px; background: #111; border: 1px solid #333; border-radius: 20px; color: #fff; font-size: 13px; min-height: 36px; resize: none; }
+        .comment-form textarea:focus { border-color: var(--gold); outline: none; }
+        .comment-form button { background: linear-gradient(180deg, var(--gold-bright), var(--gold)); color: #000; border: none; padding: 8px 15px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -396,7 +416,7 @@
         }
 
         async function loadRecentRecados() {
-            const { data: recados } = await supabaseClient.from('recados').select('*, perfis(avatar_url, nome_completo)').order('created_at', { ascending: false }).limit(5);
+            const { data: recados } = await supabaseClient.from('recados').select('*').order('created_at', { ascending: false }).limit(5);
             const container = document.getElementById('recentRecados');
             
             if (!recados || recados.length === 0) {
@@ -404,7 +424,26 @@
                 return;
             }
 
-            container.innerHTML = '<div class="feed-list">' + recados.map(r => createScrapCard(r)).join('') + '</div>';
+            let html = '';
+            for (let r of recados) {
+                const curtidas = r.curtidas || 0;
+                html += `
+                    <div class="scrap-card">
+                        <div class="scrap-header">
+                            <div class="scrap-avatar" style="background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:50%;width:45px;height:45px;">U</div>
+                            <div class="scrap-user">
+                                <div class="scrap-user-name">Usuário</div>
+                                <div class="scrap-time">${new Date(r.created_at).toLocaleDateString('pt-BR')}</div>
+                            </div>
+                        </div>
+                        <div class="scrap-content">${r.conteudo}</div>
+                        <div class="scrap-actions">
+                            <span style="color:#555;font-size:12px;">❤️ ${curtidas} curtidas</span>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = '<div class="feed-list">' + html + '</div>';
         }
 
         async function loadComunidades() {
@@ -774,12 +813,12 @@
                 <div class="alert alert-success" id="scrapAlert"></div>
                 <div class="new-scrap-form">
                     <textarea id="scrapText" placeholder="Escreva algo para a comunidade..."></textarea>
-                    <button onclick="postScrap()">Publicar</button>
+                    <button id="postScrapBtn" onclick="postScrap()">Publicar</button>
                 </div>
                 <div id="recadosList"></div>
             `;
             
-            const { data: recados } = await supabaseClient.from('recados').select('*, perfis(avatar_url, nome_completo)').order('created_at', { ascending: false });
+            const { data: recados } = await supabaseClient.from('recados').select('*').order('created_at', { ascending: false });
             const list = document.getElementById('recadosList');
 
             if (!recados || recados.length === 0) {
@@ -787,59 +826,260 @@
                 return;
             }
 
-            list.innerHTML = '<div class="feed-list">' + recados.map(r => createScrapCard(r)).join('') + '</div>';
-        }
-
-        function createScrapCard(recado) {
-            const perfil = recado.perfis || {};
-            const avatar = perfil.avatar_url || null;
-            const nome = perfil.nome_completo || 'Usuário';
-            const initial = nome.charAt(0).toUpperCase();
-            const time = new Date(recado.created_at).toLocaleDateString('pt-BR');
-            const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
-            const deleteBtn = isAdmin ? `<button class="scrap-delete visible" onclick="deleteScrap('${recado.id}')">🗑️ Excluir</button>` : '';
-
-            return `
-                <div class="scrap-card">
-                    ${deleteBtn}
-                    <div class="scrap-header">
-                        <div class="scrap-avatar">${avatarHtml}</div>
-                        <div class="scrap-user">
-                            <div class="scrap-user-name">${nome}</div>
-                            <div class="scrap-time">${time}</div>
+            let html = '';
+            for (let r of recados) {
+                let perfil = { avatar_url: null, nome_completo: 'Usuário' };
+                if (r.usuario_id) {
+                    const { data: p } = await supabaseClient.from('perfis').select('avatar_url, nome_completo').eq('id', r.usuario_id).single();
+                    if (p) perfil = p;
+                }
+                const canDelete = isAdmin || r.usuario_id === currentUser.id;
+                const avatar = perfil.avatar_url || null;
+                const nome = perfil.nome_completo || 'Usuário';
+                const initial = nome.charAt(0).toUpperCase();
+                const time = new Date(r.created_at).toLocaleDateString('pt-BR');
+                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+                const deleteBtn = canDelete ? `<button class="scrap-delete" onclick="deleteScrap('${r.id}')">🗑️ Apagar</button>` : '';
+                
+                const curtidas = r.curtidas || 0;
+                html += `
+                    <div class="scrap-card" id="scrap-${r.id}">
+                        ${deleteBtn}
+                        <div class="scrap-header">
+                            <div class="scrap-avatar">${avatarHtml}</div>
+                            <div class="scrap-user">
+                                <div class="scrap-user-name">${nome}</div>
+                                <div class="scrap-time">${time}</div>
+                            </div>
+                        </div>
+                        <div class="scrap-content">${r.conteudo}</div>
+                        <div class="scrap-actions">
+                            <button class="scrap-like-btn" onclick="curtirRecado('${r.id}')" id="like-btn-${r.id}">
+                                <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                                <span id="like-count-${r.id}">${curtidas}</span>
+                            </button>
+                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentar</button>
+                        </div>
+                        <div class="scrap-comments" id="comments-area-${r.id}" style="display:none;">
+                            <div class="comments-container" id="comments-list-${r.id}"></div>
+                            <div class="comment-form">
+                                <textarea id="comment-input-${r.id}" placeholder="Escreva um comentário..."></textarea>
+                                <button onclick="postarComentarioRecado('${r.id}')">Enviar</button>
+                            </div>
                         </div>
                     </div>
-                    <div class="scrap-content">${recado.conteudo}</div>
-                    <div class="scrap-actions">
-                        <button class="scrap-action">❤️ Curtir</button>
-                        <button class="scrap-action">💬 Comentar</button>
-                    </div>
-                </div>
-            `;
+                `;
+            }
+            list.innerHTML = '<div class="feed-list">' + html + '</div>';
+            for (let r of recados) {
+                carregarComentariosRecado(r.id);
+            }
+        }
+
+        async function curtirRecado(id) {
+            console.log('Curtindo recado:', id);
+            console.log('currentUser:', currentUser);
+            
+            const btn = document.getElementById(`like-btn-${id}`);
+            if (!btn) {
+                console.error('Botão não encontrado:', `like-btn-${id}`);
+                showToast('Erro: botão não encontrado', 'error');
+                return;
+            }
+            if (btn.classList.contains('liked')) {
+                showToast('Você já curtiu este recado!', 'info');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('recados')
+                    .select('curtidas')
+                    .eq('id', id)
+                    .single();
+
+                if (error) {
+                    console.error('Erro ao buscar recado:', error);
+                    showToast('Erro ao curtir: ' + error.message, 'error');
+                    return;
+                }
+
+                const newCount = (data?.curtidas || 0) + 1;
+                console.log('Nova contagem:', newCount);
+
+                const { error: updateError } = await supabaseClient
+                    .from('recados')
+                    .update({ curtidas: newCount })
+                    .eq('id', id);
+
+                if (updateError) {
+                    console.error('Erro ao atualizar:', updateError);
+                    showToast('Erro ao curtir: ' + updateError.message, 'error');
+                    return;
+                }
+
+                const countEl = document.getElementById(`like-count-${id}`);
+                if (countEl) countEl.textContent = newCount;
+                btn.classList.add('liked');
+                btn.querySelector('.heart-icon').setAttribute('fill', '#ff4757');
+                showToast('Curtido! ❤️', 'success');
+            } catch (e) {
+                console.error('Erro:', e);
+                showToast('Erro ao curtir', 'error');
+            }
+        }
+
+        function toggleComentarios(id) {
+            console.log('Abrindo comentários para:', id);
+            const area = document.getElementById(`comments-area-${id}`);
+            if (!area) {
+                console.error('Área de comentários não encontrada:', `comments-area-${id}`);
+                showToast('Erro: área de comentários não encontrada', 'error');
+                return;
+            }
+            if (area.style.display === 'none') {
+                area.style.display = 'block';
+                const input = document.getElementById(`comment-input-${id}`);
+                if (input) input.focus();
+            } else {
+                area.style.display = 'none';
+            }
+        }
+
+        async function carregarComentariosRecado(recadoId) {
+            try {
+                const { data: comentarios, error } = await supabaseClient
+                    .from('comentarios_recados')
+                    .select('*')
+                    .eq('recado_id', recadoId)
+                    .order('criado_em', { ascending: true });
+
+                if (error) {
+                    console.error('Erro ao carregar comentários:', error);
+                    return;
+                }
+
+                const container = document.getElementById(`comments-list-${recadoId}`);
+                if (!container) return;
+
+                if (!comentarios || comentarios.length === 0) {
+                    container.innerHTML = '<p style="color:#555;font-size:0.8rem;padding:5px;">Nenhum comentário ainda. Seja o primeiro!</p>';
+                    return;
+                }
+
+                let html = '';
+                for (let c of comentarios) {
+                    let perfil = { avatar_url: null, nome_completo: 'Usuário' };
+                    if (c.autor_id) {
+                        const { data: p } = await supabaseClient.from('perfis').select('avatar_url, nome_completo').eq('id', c.autor_id).single();
+                        if (p) perfil = p;
+                    }
+                    const avatar = perfil.avatar_url || null;
+                    const nome = perfil.nome_completo || 'Usuário';
+                    const initial = nome.charAt(0).toUpperCase();
+                    const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
+                    const time = new Date(c.criado_em).toLocaleDateString('pt-BR');
+
+                    html += `
+                        <div class="comment-scrap">
+                            <div class="comment-scrap-avatar">${avatarHtml}</div>
+                            <div class="comment-scrap-content">
+                                <div class="comment-scrap-author">${nome}</div>
+                                <div class="comment-scrap-text">${c.conteudo}</div>
+                                <div class="comment-scrap-time">${time}</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                container.innerHTML = html;
+            } catch (e) {
+                console.error('Erro ao carregar comentários:', e);
+            }
+        }
+
+        async function postarComentarioRecado(recadoId) {
+            const input = document.getElementById(`comment-input-${recadoId}`);
+            if (!input) return;
+            
+            const texto = input.value.trim();
+            if (!texto) {
+                showToast('Digite um comentário!', 'info');
+                return;
+            }
+
+            try {
+                const { error } = await supabaseClient.from('comentarios_recados').insert({
+                    recado_id: recadoId,
+                    autor_id: currentUser.id,
+                    conteudo: texto
+                });
+
+                if (error) {
+                    console.error('Erro ao postar comentário:', error);
+                    showToast('Erro ao postar comentário. Execute o SQL no Supabase.', 'error');
+                    return;
+                }
+
+                input.value = '';
+                await carregarComentariosRecado(recadoId);
+                showToast('Comentário adicionado!', 'success');
+            } catch (e) {
+                console.error('Erro:', e);
+                showToast('Erro ao postar comentário', 'error');
+            }
+        }
+            const texto = input.value.trim();
+            if (!texto) return;
+
+            await supabaseClient.from('comentarios_recados').insert({
+                recado_id: recadoId,
+                autor_id: currentUser.id,
+                conteudo: texto
+            });
+
+            input.value = '';
+            await carregarComentariosRecado(recadoId);
+            showToast('Comentário adicionado!', 'success');
+        }
+
+        async function deleteScrap(id) {
+            if (!confirm('Tem certeza que deseja apagar este recado?')) return;
+            const { error } = await supabaseClient.from('recados').delete().eq('id', id);
+            if (error) {
+                showToast('Erro ao apagar recado', 'error');
+            } else {
+                showToast('Recado apagado!', 'success');
+                loadRecados();
+            }
         }
 
         async function postScrap() {
             const text = document.getElementById('scrapText').value.trim();
             if (!text) return;
 
+            const btn = document.getElementById('postScrapBtn');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+
             const { error } = await supabaseClient.from('recados').insert({
                 usuario_id: currentUser.id,
-                conteudo: text
+                conteudo: text,
+                curtidas: 0
             });
 
             if (error) {
-                showAlert('Erro ao postar: ' + error.message, 'error');
+                showToast('Erro ao postar recado', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Publicar';
             } else {
                 document.getElementById('scrapText').value = '';
-                showAlert('Recado publicado!', 'success');
+                btn.disabled = false;
+                btn.textContent = 'Publicar';
+                showToast('Recado publicado!', 'success');
                 loadRecados();
             }
-        }
-
-        async function deleteScrap(id) {
-            if (!confirm('Excluir este recado?')) return;
-            await supabaseClient.from('recados').delete().eq('id', id);
-            loadRecados();
         }
 
         async function loadFotos() {
