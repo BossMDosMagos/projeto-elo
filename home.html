@@ -426,24 +426,50 @@
 
             let html = '';
             for (let r of recados) {
+                let perfil = { avatar_url: null, nome_completo: 'Usuário' };
+                if (r.usuario_id) {
+                    const { data: p } = await supabaseClient.from('perfis').select('avatar_url, nome_completo').eq('id', r.usuario_id).single();
+                    if (p) perfil = p;
+                }
+                const avatar = perfil.avatar_url || null;
+                const nome = perfil.nome_completo || 'Usuário';
+                const initial = nome.charAt(0).toUpperCase();
+                const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : `<div style="background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:50%;width:45px;height:45px;">${initial}</div>`;
                 const curtidas = r.curtidas || 0;
+                
                 html += `
-                    <div class="scrap-card">
+                    <div class="scrap-card" id="scrap-home-${r.id}">
                         <div class="scrap-header">
-                            <div class="scrap-avatar" style="background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:50%;width:45px;height:45px;">U</div>
+                            <div class="scrap-avatar">${avatarHtml}</div>
                             <div class="scrap-user">
-                                <div class="scrap-user-name">Usuário</div>
+                                <div class="scrap-user-name">${nome}</div>
                                 <div class="scrap-time">${new Date(r.created_at).toLocaleDateString('pt-BR')}</div>
                             </div>
                         </div>
                         <div class="scrap-content">${r.conteudo}</div>
                         <div class="scrap-actions">
-                            <span style="color:#555;font-size:12px;">❤️ ${curtidas} curtidas</span>
+                            <button class="scrap-like-btn" onclick="curtirRecado('${r.id}')" id="like-btn-${r.id}">
+                                <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                </svg>
+                                <span id="like-count-${r.id}">${curtidas}</span>
+                            </button>
+                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentar</button>
+                        </div>
+                        <div class="scrap-comments" id="comments-area-${r.id}" style="display:none;">
+                            <div class="comments-container" id="comments-list-${r.id}"></div>
+                            <div class="comment-form">
+                                <textarea id="comment-input-${r.id}" placeholder="Escreva um comentário..."></textarea>
+                                <button onclick="postarComentarioRecado('${r.id}')">Enviar</button>
+                            </div>
                         </div>
                     </div>
                 `;
             }
             container.innerHTML = '<div class="feed-list">' + html + '</div>';
+            for (let r of recados) {
+                carregarComentariosRecado(r.id);
+            }
         }
 
         async function loadComunidades() {
