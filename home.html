@@ -436,6 +436,16 @@
                 const initial = nome.charAt(0).toUpperCase();
                 const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : `<div style="background:var(--gold);color:#000;display:flex;align-items:center;justify-content:center;font-weight:bold;border-radius:50%;width:45px;height:45px;">${initial}</div>`;
                 const curtidas = r.curtidas || 0;
+                const isOwnScrap = currentUser.id === r.usuario_id;
+                
+                const { count: commentCount } = await supabaseClient
+                    .from('comentarios_recados')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('recado_id', r.id);
+                const numComments = commentCount || 0;
+                
+                const likeBtnDisabled = isOwnScrap ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : '';
+                const likeBtnClick = isOwnScrap ? '' : `onclick="curtirRecado('${r.id}')"`;
                 
                 html += `
                     <div class="scrap-card" id="scrap-home-${r.id}">
@@ -448,16 +458,16 @@
                         </div>
                         <div class="scrap-content">${r.conteudo}</div>
                         <div class="scrap-actions">
-                            <button class="scrap-like-btn" onclick="curtirRecado('${r.id}')" id="like-btn-${r.id}">
+                            <button class="scrap-like-btn" ${likeBtnDisabled} id="like-btn-${r.id}" ${likeBtnClick}>
                                 <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                                 <span id="like-count-${r.id}">${curtidas}</span>
                             </button>
-                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentários</button>
+                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentários (${numComments})</button>
                         </div>
                         <div class="scrap-comments" id="comments-area-${r.id}" style="display:none;">
-                            <div class="comments-container" id="comments-list-${r.id}"></div>
+                            <div class="comments-container" id="comments-list-${r.id}" data-scrap-author="${r.usuario_id}"></div>
                             <div class="comment-form">
                                 <textarea id="comment-input-${r.id}" placeholder="Escreva um comentário..."></textarea>
                                 <button onclick="postarComentarioRecado('${r.id}')">Enviar</button>
@@ -868,6 +878,17 @@
                 const deleteBtn = canDelete ? `<button class="scrap-delete" onclick="deleteScrap('${r.id}')">🗑️ Apagar</button>` : '';
                 
                 const curtidas = r.curtidas || 0;
+                const isOwnScrap = currentUser.id === r.usuario_id;
+                
+                const { count: commentCount } = await supabaseClient
+                    .from('comentarios_recados')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('recado_id', r.id);
+                const numComments = commentCount || 0;
+                
+                const likeBtnDisabled = isOwnScrap ? 'disabled style="opacity:0.4;cursor:not-allowed;"' : '';
+                const likeBtnClick = isOwnScrap ? '' : `onclick="curtirRecado('${r.id}')"`;
+                
                 html += `
                     <div class="scrap-card" id="scrap-${r.id}">
                         ${deleteBtn}
@@ -880,13 +901,13 @@
                         </div>
                         <div class="scrap-content">${r.conteudo}</div>
                         <div class="scrap-actions">
-                            <button class="scrap-like-btn" onclick="curtirRecado('${r.id}')" id="like-btn-${r.id}">
+                            <button class="scrap-like-btn" ${likeBtnDisabled} id="like-btn-${r.id}" ${likeBtnClick}>
                                 <svg class="heart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                                 </svg>
                                 <span id="like-count-${r.id}">${curtidas}</span>
                             </button>
-                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentários</button>
+                            <button class="scrap-action" onclick="toggleComentarios('${r.id}')">💬 Comentários (${numComments})</button>
                         </div>
                         <div class="scrap-comments" id="comments-area-${r.id}" style="display:none;">
                             <div class="comments-container" id="comments-list-${r.id}"></div>
@@ -976,6 +997,9 @@
 
         async function carregarComentariosRecado(recadoId) {
             try {
+                const { data: recado } = await supabaseClient.from('recados').select('usuario_id').eq('id', recadoId).single();
+                const scrapAuthorId = recado?.usuario_id;
+
                 const { data: comentarios, error } = await supabaseClient
                     .from('comentarios_recados')
                     .select('*')
@@ -1007,12 +1031,16 @@
                     const initial = nome.charAt(0).toUpperCase();
                     const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
                     const time = new Date(c.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    
+                    const isAuthor = c.autor_id === scrapAuthorId;
+                    const authorStyle = isAuthor ? 'border:1px solid var(--gold);border-radius:8px;padding:8px;margin-bottom:5px;' : '';
+                    const authorBadge = isAuthor ? '<span style="background:var(--gold);color:#000;font-size:9px;padding:2px 6px;border-radius:4px;margin-left:5px;font-weight:bold;">Autor</span>' : '';
 
                     html += `
-                        <div class="comment-scrap">
+                        <div class="comment-scrap" style="${authorStyle}">
                             <div class="comment-scrap-avatar">${avatarHtml}</div>
                             <div class="comment-scrap-content">
-                                <div class="comment-scrap-author">${nome}</div>
+                                <div class="comment-scrap-author">${nome} ${authorBadge}</div>
                                 <div class="comment-scrap-text">${c.conteudo}</div>
                                 <div class="comment-scrap-time">${time}</div>
                             </div>
