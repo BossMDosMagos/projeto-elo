@@ -443,7 +443,7 @@
                             <div class="scrap-avatar">${avatarHtml}</div>
                             <div class="scrap-user">
                                 <div class="scrap-user-name">${nome}</div>
-                                <div class="scrap-time">${new Date(r.created_at).toLocaleDateString('pt-BR')}</div>
+                                <div class="scrap-time">${new Date(r.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</div>
                             </div>
                         </div>
                         <div class="scrap-content">${r.conteudo}</div>
@@ -613,7 +613,7 @@
                 
                 const initial = nome.charAt(0).toUpperCase();
                 const avatarHtml = avatarUrl ? `<img src="${avatarUrl}" alt="${nome}">` : initial;
-                const time = new Date(t.criado_em).toLocaleDateString('pt-BR');
+                const time = new Date(t.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 
                 const { count } = await supabaseClient
                     .from('comentarios')
@@ -686,7 +686,7 @@
             }
             const autorInitial = autorNome.charAt(0).toUpperCase();
             const autorAvatarHtml = autorAvatar ? `<img src="${autorAvatar}" alt="${autorNome}">` : autorInitial;
-            const time = new Date(topico.criado_em).toLocaleDateString('pt-BR');
+            const time = new Date(topico.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
             let commentsHtml = '';
             if (comentarios && comentarios.length > 0) {
@@ -702,7 +702,7 @@
                     }
                     const cInitial = cNome.charAt(0).toUpperCase();
                     const cAvatarHtml = cAvatar ? `<img src="${cAvatar}" alt="${cNome}">` : cInitial;
-                    const cTime = new Date(c.criado_em).toLocaleDateString('pt-BR');
+                    const cTime = new Date(c.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                     commentsHtml += `
                         <div class="comment">
                             <div class="comment-avatar">${cAvatarHtml}</div>
@@ -863,7 +863,7 @@
                 const avatar = perfil.avatar_url || null;
                 const nome = perfil.nome_completo || 'Usuário';
                 const initial = nome.charAt(0).toUpperCase();
-                const time = new Date(r.created_at).toLocaleDateString('pt-BR');
+                const time = new Date(r.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
                 const deleteBtn = canDelete ? `<button class="scrap-delete" onclick="deleteScrap('${r.id}')">🗑️ Apagar</button>` : '';
                 
@@ -1006,7 +1006,7 @@
                     const nome = perfil.nome_completo || 'Usuário';
                     const initial = nome.charAt(0).toUpperCase();
                     const avatarHtml = avatar ? `<img src="${avatar}" alt="${nome}">` : initial;
-                    const time = new Date(c.criado_em).toLocaleDateString('pt-BR');
+                    const time = new Date(c.criado_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
                     html += `
                         <div class="comment-scrap">
