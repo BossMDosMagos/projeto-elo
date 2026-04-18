@@ -210,7 +210,7 @@
 
     <header>
         <div class="logo-area">
-            <a href="#" onclick="loadSection('home'); return false;"><img src="imagens/LOGO ELO FINAL.png" alt="ELO"></a>
+            <a href="#" onclick="loadSection('home'); event.preventDefault();"><img src="imagens/LOGO ELO FINAL.png" alt="ELO"></a>
         </div>
         <div class="user-menu">
             <div class="user-avatar" id="userAvatar">?</div>
@@ -225,23 +225,23 @@
             <div class="sidebar-section">
                 <div class="sidebar-title">Menu</div>
                 <ul class="sidebar-menu">
-                    <li><a href="#" onclick="loadSection('home'); return false;" class="active" data-section="home"><span class="icon">🏠</span> Início</a></li>
-                    <li><a href="#" onclick="loadSection('comunidades'); return false;" data-section="comunidades"><span class="icon">👥</span> Comunidades</a></li>
-                    <li><a href="#" onclick="loadSection('recados'); return false;" data-section="recados"><span class="icon">📝</span> Recados</a></li>
-                    <li><a href="#" onclick="loadSection('fotos'); return false;" data-section="fotos"><span class="icon">📷</span> Fotos</a></li>
+                    <li><a href="#" onclick="loadSection('home'); event.preventDefault();" class="active" data-section="home"><span class="icon">🏠</span> Início</a></li>
+                    <li><a href="#" onclick="loadSection('comunidades'); event.preventDefault();" data-section="comunidades"><span class="icon">👥</span> Comunidades</a></li>
+                    <li><a href="#" onclick="loadSection('recados'); event.preventDefault();" data-section="recados"><span class="icon">📝</span> Recados</a></li>
+                    <li><a href="#" onclick="loadSection('fotos'); event.preventDefault();" data-section="fotos"><span class="icon">📷</span> Fotos</a></li>
                 </ul>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-title">Pessoal</div>
                 <ul class="sidebar-menu">
-                    <li><a href="#" onclick="loadSection('config'); return false;" data-section="config"><span class="icon">⚙️</span> Configurações</a></li>
-                    <li><a href="#" onclick="loadSection('privacidade'); return false;" data-section="privacidade"><span class="icon">🔒</span> Privacidade</a></li>
+                    <li><a href="#" onclick="loadSection('config'); event.preventDefault();" data-section="config"><span class="icon">⚙️</span> Configurações</a></li>
+                    <li><a href="#" onclick="loadSection('privacidade'); event.preventDefault();" data-section="privacidade"><span class="icon">🔒</span> Privacidade</a></li>
                 </ul>
             </div>
             <div class="sidebar-section admin-section" id="adminSection">
                 <div class="sidebar-title">⚠️ Administração</div>
                 <ul class="sidebar-menu admin-menu">
-                    <li><a href="#" onclick="loadSection('admin'); return false;" data-section="admin"><span class="icon">🛡️</span> Painel de Controle</a></li>
+                    <li><a href="#" onclick="loadSection('admin'); event.preventDefault();" data-section="admin"><span class="icon">🛡️</span> Painel de Controle</a></li>
                 </ul>
             </div>
         </nav>
@@ -525,8 +525,8 @@
             const manageBtn = canManage ? `<button class="btn-manage" onclick="event.stopPropagation()">🛠️ Gerenciar</button>` : '';
 
             document.getElementById('mainContent').innerHTML = `
-                <a class="back-link" onclick="loadComunidades(); return false;">← Voltar para Comunidades</a>
-                <div class="community-header" onclick="return false;">
+                <a class="back-link" onclick="loadComunidades(); event.preventDefault();">← Voltar para Comunidades</a>
+                <div class="community-header" onclick="event.preventDefault();">
                     <div class="community-banner">${bannerHtml}</div>
                     <div class="community-header-content">
                         <h1>${comunidade.icone || ''} ${comunidade.nome}</h1>
@@ -693,7 +693,7 @@
             }
 
             document.getElementById('mainContent').innerHTML = `
-                <a class="back-link" onclick="abrirComunidade('${topico.comunidade_id}'); return false;">← Voltar para Comunidade</a>
+                <a class="back-link" onclick="abrirComunidade('${topico.comunidade_id}'); event.preventDefault();">← Voltar para Comunidade</a>
                 <div class="topic-detail">
                     <div class="topic-header">
                         <div class="topic-avatar" style="width:50px;height:50px;font-size:20px;">${autorAvatarHtml}</div>
