@@ -535,7 +535,7 @@ if (c.status_venda === 'vendido') {
             const c = payload.new;
             console.log(' realtime - Leilao atualizado:', c);
             
-            if (c.status_venda === 'vendido') {
+if (data.status_venda === 'vendido') {
                 showToast(`Leilão de ${c.nome} foi vendido!`, 'success');
                 loadComunidades();
                 if (currentLeilaoId) {
@@ -777,6 +777,7 @@ if (c.status_venda === 'vendido') {
         }
 
         let cardTimerInterval = null;
+        let leilaoInterval = null;
         let currentLeilaoId = null;
         let currentLeilaoEndTime = null;
 
