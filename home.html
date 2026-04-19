@@ -266,6 +266,11 @@
                     <label>URL da Imagem de Capa</label>
                     <input type="url" id="communityImage" placeholder="https://exemplo.com/imagem.jpg">
                 </div>
+                <div class="form-group" style="display:flex;align-items:center;gap:10px;">
+                    <input type="checkbox" id="communityLeiloavel" style="width:20px;height:20px;accent-color:#d4af37;">
+                    <label for="communityLeiloavel" style="color:#d4af37;cursor:pointer;">🔨 Colocar para Leilão (7 dias)</label>
+                </div>
+                </div>
                 <div class="form-group">
                     <label>Categoria</label>
                     <select id="communityCategory">
@@ -292,6 +297,47 @@
                     <label>Título do Tópico *</label>
                     <input type="text" id="topicTitle" placeholder="Qual o assunto?" required>
                 </div>
+                <div class="form-group">
+                    <label>Conteúdo</label>
+                    <textarea id="topicContent" placeholder="Descreva sua dúvida ou topic..."></textarea>
+                </div>
+                <button type="submit" class="btn-save">Criar Tópico</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="leilaoModal">
+        <div class="modal-content" style="max-width:550px;background:linear-gradient(135deg,#0a0a0a,#1a1a1a);border:2px solid #d4af37;">
+            <button class="modal-close" onclick="closeLeilaoModal()">&times;</button>
+            <div style="text-align:center;">
+                <div style="font-size:4rem;margin-bottom:10px;" id="leilaoIcon">🔒</div>
+                <h2 style="color:#d4af37;font-size:1.8rem;margin-bottom:5px;" id="leilaoName">Apple</h2>
+                <p style="color:#888;font-size:0.9rem;margin-bottom:20px;">Comunidade Exclusiva - Leilão Premium</p>
+            </div>
+            <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,175,55,0.3);border-radius:12px;padding:20px;margin-bottom:20px;">
+                <div style="color:#d4af37;font-size:0.85rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Tempo Restante</div>
+                <div id="leilaoTimer" style="color:#fff;font-size:2.5rem;font-weight:bold;text-align:center;font-family:monospace;">00d 00:00:00</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px;">
+                <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:15px;text-align:center;">
+                    <div style="color:#888;font-size:0.75rem;text-transform:uppercase;">Lance Atual</div>
+                    <div id="leilaoValor" style="color:#d4af37;font-size:1.5rem;font-weight:bold;">R$ 0</div>
+                </div>
+                <div style="background:rgba(0,0,0,0.5);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:15px;text-align:center;">
+                    <div style="color:#888;font-size:0.75rem;text-transform:uppercase;">Último Licitante</div>
+                    <div id="leilaoLicitante" style="color:#fff;font-size:1rem;">-</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label style="color:#d4af37;">Dê o seu lance (maior que o atual)</label>
+                <input type="number" id="leilaoLance" placeholder="Digite o valor" min="0" style="background:#111;border:1px solid #333;color:#fff;padding:12px;border-radius:8px;font-size:16px;width:100%;">
+            </div>
+            <button type="button" onclick="darLance()" style="background:linear-gradient(180deg,#f9e295,#d4af37);color:#000;border:none;padding:15px;border-radius:25px;font-weight:bold;cursor:pointer;width:100%;font-size:16px;margin-top:10px;">💰 Dar Lance</button>
+            <div style="text-align:center;margin-top:15px;color:#555;font-size:0.75rem;">
+                ⚠️ Lances nos últimos 5 minutos adicionam +5 minutos ao cronômetro
+            </div>
+        </div>
+    </div>
                 <div class="form-group">
                     <label>Conteúdo</label>
                     <textarea id="topicContent" placeholder="Descreva sua dúvida ou topic..."></textarea>
@@ -510,6 +556,26 @@
 
             grid.innerHTML = comunidades.map(c => {
                 const isParticipating = participatingIds.includes(c.id);
+                
+                if (c.is_leiloavel && c.status_venda === 'aberto') {
+                    const lanceDisplay = c.lance_atual ? `R$ ${parseFloat(c.lance_atual).toLocaleString('pt-BR')}` : 'R$ 0';
+                    const badgeLeilao = c.is_leiloavel ? `<span style="background:linear-gradient(135deg,#d4af37,#f9e295);color:#000;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:bold;margin-left:8px;">🔨 LEILÃO</span>` : '';
+                    return `
+                        <div class="community-card" onclick="abrirLeilao('${c.id}')" style="cursor:pointer;position:relative;">
+                            <div class="community-cover" style="position:relative;">
+                                ${c.icone || '👥'}
+                                <div style="position:absolute;top:10px;right:10px;font-size:2rem;">🔒</div>
+                            </div>
+                            <div class="community-info">
+                                <h3>${c.nome} ${badgeLeilao}</h3>
+                                <p>${c.descricao || ''}</p>
+                                <p style="color:#d4af37;font-weight:bold;font-size:0.9rem;">🏷️ Atual: ${lanceDisplay}</p>
+                                <button class="btn-participate" style="margin-top:10px;" onclick="event.stopPropagation(); abrirLeilao('${c.id}')">🔨 Participar do Leilão</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                
                 const btnClass = isParticipating ? 'btn-participating' : 'btn-participate';
                 const btnText = isParticipating ? '✓ Participando' : 'Participar';
                 const btnAction = isParticipating ? `abrirComunidade('${c.id}')` : `participarComunidade('${c.id}')`;
@@ -525,6 +591,148 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        let leilaoInterval = null;
+        let currentLeilaoId = null;
+        let currentLeilaoEndTime = null;
+
+        function abrirLeilao(id) {
+            currentLeilaoId = id;
+            openLeilaoModal(id);
+        }
+
+        function openLeilaoModal(id) {
+            loadLeilaoData(id);
+            document.getElementById('leilaoModal').classList.add('show');
+        }
+
+        function closeLeilaoModal() {
+            document.getElementById('leilaoModal').classList.remove('show');
+            if (leilaoInterval) {
+                clearInterval(leilaoInterval);
+                leilaoInterval = null;
+            }
+            currentLeilaoId = null;
+        }
+
+        async function loadLeilaoData(id) {
+            const { data: c } = await supabaseClient.from('comunidades').select('*').eq('id', id).single();
+            if (!c) return;
+
+            document.getElementById('leilaoIcon').textContent = c.icone || '🔒';
+            document.getElementById('leilaoName').textContent = c.nome;
+            document.getElementById('leilaoValor').textContent = `R$ ${parseFloat(c.lance_atual || 0).toLocaleString('pt-BR')}`;
+            
+            if (c.id_ultimo_licitante) {
+                const { data: perfil } = await supabaseClient.from('perfis').select('nome_completo').eq('id', c.id_ultimo_licitante).single();
+                document.getElementById('leilaoLicitante').textContent = perfil?.nome_completo || 'Usuário';
+            } else {
+                document.getElementById('leilaoLicitante').textContent = '-';
+            }
+
+            currentLeilaoEndTime = c.data_fim_leilao ? new Date(c.data_fim_leilao).getTime() : null;
+
+            if (leilaoInterval) clearInterval(leilaoInterval);
+            
+            leilaoInterval = setInterval(() => {
+                updateLeilaoTimer();
+            }, 1000);
+
+            document.getElementById('leilaoLance').value = '';
+            document.getElementById('leilaoLance').min = (parseFloat(c.lance_atual) || 0) + 1;
+        }
+
+        function updateLeilaoTimer() {
+            if (!currentLeilaoEndTime) {
+                document.getElementById('leilaoTimer').textContent = 'Leilão não iniciado';
+                return;
+            }
+
+            const now = new Date().getTime();
+            const diff = currentLeilaoEndTime - now;
+
+            if (diff <= 0) {
+                document.getElementById('leilaoTimer').textContent = 'LEILÃO ENCERRADO!';
+                document.getElementById('leilaoTimer').style.color = '#ff4757';
+                finalizarLeilao();
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('leilaoTimer').textContent = 
+                `${days}d ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+            
+            document.getElementById('leilaoTimer').style.color = diff < 300000 ? '#ff4757' : '#fff';
+        }
+
+        async function darLance() {
+            const lance = parseFloat(document.getElementById('leilaoLance').value);
+            if (!lance || lance <= 0) {
+                showToast('Digite um lance válido!', 'error');
+                return;
+            }
+
+            const { data: c } = await supabaseClient.from('comunidades').select('lance_atual').eq('id', currentLeilaoId).single();
+            if (lance <= (c?.lance_atual || 0)) {
+                showToast('O lance deve ser maior que o atual!', 'error');
+                return;
+            }
+
+            const now = new Date();
+            const { data: comunidade } = await supabaseClient.from('comunidades').select('data_fim_leilao').eq('id', currentLeilaoId).single();
+            let novoTempo = comunidade?.data_fim_leilao;
+            
+            if (comunidade?.data_fim_leilao) {
+                const tempoRestante = new Date(comunidade.data_fim_leilao).getTime() - now.getTime();
+                if (tempoRestante < 300000) {
+                    novoTempo = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+                    showToast('+5 minutos adicionados ao cronômetro!', 'success');
+                }
+            }
+
+            const { error } = await supabaseClient.from('comunidades').update({
+                lance_atual: lance,
+                id_ultimo_licitante: currentUser.id,
+                data_fim_leilao: novoTempo
+            }).eq('id', currentLeilaoId);
+
+            if (error) {
+                showToast('Erro ao dar lance: ' + error.message, 'error');
+            } else {
+                showToast('Lance dado com sucesso!', 'success');
+                loadLeilaoData(currentLeilaoId);
+            }
+        }
+
+        async function finalizarLeilao() {
+            if (leilaoInterval) {
+                clearInterval(leilaoInterval);
+                leilaoInterval = null;
+            }
+
+            const { data: c } = await supabaseClient.from('comunidades').select('*').eq('id', currentLeilaoId).single();
+            if (!c || c.status_venda === 'vendido') return;
+
+            await supabaseClient.from('comunidades').update({
+                status_venda: 'vendido',
+                is_leiloavel: false,
+                criado_por: c.id_ultimo_licitante
+            }).eq('id', currentLeilaoId);
+
+            if (c.id_ultimo_licitante) {
+                await supabaseClient.from('membros_comunidades').insert({
+                    comunidade_id: currentLeilaoId,
+                    usuario_id: c.id_ultimo_licitante
+                });
+            }
+
+            showToast('Leilão finalizedo! O novo dono é ' + (c.id_ultimo_licitante ? 'o vencedor!' : 'ninguém...'), 'success');
+            closeLeilaoModal();
         }
 
         async function abrirComunidade(id) {
@@ -816,6 +1024,7 @@
             const descricao = document.getElementById('communityDesc').value.trim();
             const imagem_url = document.getElementById('communityImage').value.trim();
             const categoria = document.getElementById('communityCategory').value;
+            const isLeiloavel = document.getElementById('communityLeiloavel').checked;
 
             if (!nome) {
                 showToast('O nome da comunidade é obrigatório!', 'info');
@@ -825,14 +1034,23 @@
             const icones = { musica: '🎵', dev: '💻', games: '🎮', filmes: '🎬', livros: '📚', esportes: '⚽' };
             const icone = icones[categoria] || '👥';
 
-            const { error } = await supabaseClient.from('comunidades').insert({
+            const insertData = {
                 nome: nome,
                 descricao: descricao,
                 imagem_url: imagem_url || null,
                 icone: icone,
                 categoria: categoria,
                 criado_por: currentUser.id
-            });
+            };
+
+            if (isLeiloavel && isAdmin) {
+                insertData.is_leiloavel = true;
+                insertData.status_venda = 'aberto';
+                insertData.lance_atual = 0;
+                insertData.data_fim_leilao = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            }
+
+            const { error } = await supabaseClient.from('comunidades').insert(insertData);
 
             if (error) {
                 showToast('Erro ao criar comunidade', 'error');
