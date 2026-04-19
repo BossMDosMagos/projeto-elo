@@ -766,7 +766,7 @@
             const joinBtnText = isParticipating ? '🚪 Sair da Comunidade' : '✓ Participar';
             const joinBtnAction = isParticipating ? `sairComunidade('${id}')` : `participarComunidade('${id}')`;
 
-            const manageBtn = canManage ? `<button class="btn-manage" onclick="event.stopPropagation()">🛠️ Gerenciar</button>` : '';
+            const manageBtn = canManage ? `<button class="btn-manage" onclick="gerenciarComunidade('${id}')">🛠️ Gerenciar</button>` : '';
 
             document.getElementById('mainContent').innerHTML = `
                 <a class="back-link" onclick="loadComunidades(); event.preventDefault();">← Voltar para Comunidades</a>
@@ -788,6 +788,10 @@
             `;
 
             renderizarTopicos(topicos, id);
+        }
+
+        function gerenciarComunidade(id) {
+            showToast('Função de gerenciamento em desenvolvimento!', 'info');
         }
 
         async function renderizarTopicos(topicos, comunidadeId) {
