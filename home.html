@@ -526,7 +526,17 @@
                     currentLeilaoEndTime = new Date(c.data_fim_leilao).getTime();
                 }
 
+                if (c.status_venda === 'vendido') {
+                    showToast('LEILÃO VENDIDO! 🎉', 'success');
+                    closeLeilaoModal();
+                    return;
+                }
+
                 showToast('Novo lance detectado! 💰', 'success');
+            }
+
+            if (c.status_venda === 'vendido') {
+                showToast(`Leilão de ${c.nome} foi vendido!`, 'info');
             }
             
             loadComunidades();
@@ -689,8 +699,9 @@
                 if (c.is_leiloavel && c.status_venda === 'aberto') {
                     const lanceDisplay = c.lance_atual ? `R$ ${parseFloat(c.lance_atual).toLocaleString('pt-BR')}` : 'R$ 0';
                     const badgeLeilao = c.is_leiloavel ? `<span style="background:linear-gradient(135deg,#d4af37,#f9e295);color:#000;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:bold;margin-left:8px;">🔨 LEILÃO</span>` : '';
+                    const timerDisplay = c.data_fim_leilao ? `data-fim="${c.data_fim_leilao}"` : '';
                     return `
-                        <div class="community-card" data-leilao-id="${c.id}" onclick="abrirLeilao('${c.id}')" style="cursor:pointer;position:relative;">
+                        <div class="community-card" data-leilao-id="${c.id}" data-timer-end="${c.data_fim_leilao || ''}" onclick="abrirLeilao('${c.id}')" style="cursor:pointer;position:relative;">
                             <div class="community-cover" style="position:relative;">
                                 ${c.icone || '👥'}
                                 <div style="position:absolute;top:10px;right:10px;font-size:2rem;">🔒</div>
@@ -699,6 +710,7 @@
                                 <h3>${c.nome} ${badgeLeilao}</h3>
                                 <p>${c.descricao || ''}</p>
                                 <p class="lance-display" style="color:#d4af37;font-weight:bold;font-size:0.9rem;">🏷️ Atual: ${lanceDisplay}</p>
+                                <div class="leilao-timer" id="timer-card-${c.id}" ${timerDisplay} style="background:rgba(0,0,0,0.5);border:1px solid #d4af37;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;font-family:monospace;font-size:1rem;font-weight:bold;color:#d4af37;">Carregando...</div>
                                 <button class="btn-participate" style="margin-top:10px;" onclick="event.stopPropagation(); abrirLeilao('${c.id}')">🔨 Participar do Leilão</button>
                             </div>
                         </div>
@@ -720,11 +732,62 @@
                     </div>
                 `;
             }).join('');
+            
+            startCardTimers();
         }
 
-        let leilaoInterval = null;
+        let cardTimerInterval = null;
         let currentLeilaoId = null;
         let currentLeilaoEndTime = null;
+
+        function startCardTimers() {
+            if (cardTimerInterval) clearInterval(cardTimerInterval);
+            
+            updateAllCardTimers();
+            cardTimerInterval = setInterval(updateAllCardTimers, 1000);
+        }
+
+        function updateAllCardTimers() {
+            const timerElements = document.querySelectorAll('[id^="timer-card-"]');
+            timerElements.forEach(el => {
+                const dataFim = el.dataset.fim;
+                if (!dataFim) {
+                    el.textContent = 'Sem timer';
+                    return;
+                }
+
+                const endTime = new Date(dataFim).getTime();
+                const now = new Date().getTime();
+                const diff = endTime - now;
+
+                if (diff <= 0) {
+                    el.textContent = '⛔ ENCERRADO';
+                    el.style.color = '#ff4757';
+                    el.style.borderColor = '#ff4757';
+                    return;
+                }
+
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                if (days > 0) {
+                    el.textContent = `${days}d ${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+                } else {
+                    el.textContent = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+                }
+
+                if (diff < 24 * 60 * 60 * 1000) {
+                    el.style.color = '#ff6b35';
+                    el.style.borderColor = '#ff6b35';
+                } else if (diff < 60 * 60 * 1000) {
+                    el.style.color = '#ff4757';
+                    el.style.borderColor = '#ff4757';
+                    el.style.animation = 'pulseGold 0.5s infinite';
+                }
+            });
+        }
 
         function abrirLeilao(id) {
             currentLeilaoId = id;
