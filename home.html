@@ -921,31 +921,36 @@ if (data.status_venda === 'vendido') {
                 return;
             }
 
-            showToast('Processando lance...', 'info');
+            const { data: c } = await supabaseClient.from('comunidades').select('lance_atual, data_fim_leilao').eq('id', currentLeilaoId).single();
+            if (lance <= (c?.lance_atual || 0)) {
+                showToast('O lance deve ser maior que o atual!', 'error');
+                return;
+            }
 
-            const { data, error } = await supabaseClient.rpc('validar_lance_leilao', {
-                p_comunidade_id: currentLeilaoId,
-                p_lance: lance,
-                p_usuario_id: currentUser.id
-            });
+            const now = new Date();
+            let novoTempo = c?.data_fim_leilao;
+            
+            if (c?.data_fim_leilao) {
+                const tempoRestante = new Date(c.data_fim_leilao).getTime() - now.getTime();
+                if (tempoRestante < 300000) {
+                    novoTempo = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
+                    showToast('+5 minutos!', 'success');
+                }
+            }
+
+            const { error } = await supabaseClient.from('comunidades').update({
+                lance_atual: lance,
+                id_ultimo_licitante: currentUser.id,
+                data_fim_leilao: novoTempo
+            }).eq('id', currentLeilaoId);
 
             if (error) {
                 showToast('Erro: ' + error.message, 'error');
-                return;
-            }
-
-            if (!data?.success) {
-                showToast(data?.message || 'Lance inválido!', 'error');
-                return;
-            }
-
-            showToast(data.message || 'Lance registrado!', 'success');
-            
-            if (data.novo_tempo) {
+            } else {
+                showToast('Lance dado!', 'success');
+                currentLeilaoEndTime = novoTempo ? new Date(novoTempo).getTime() : null;
                 await loadLeilaoData(currentLeilaoId);
             }
-            
-            loadComunidades();
         }
 
         async function finalizarLeilao() {
