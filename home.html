@@ -185,6 +185,12 @@
         .toast-info { background: linear-gradient(135deg, rgba(50, 150, 200, 0.95), rgba(30, 100, 150, 0.95)); color: #fff; border-left: 4px solid #6bc5ff; }
         .toast-icon { font-size: 20px; }
 
+        @keyframes pulseGold {
+            0% { transform: scale(1); color: #fff; }
+            50% { transform: scale(1.2); color: #d4af37; text-shadow: 0 0 20px #d4af37; }
+            100% { transform: scale(1); color: #fff; }
+        }
+
         .scrap-like-btn { background: none; border: none; color: #555; font-size: 12px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 15px; }
         .scrap-like-btn:hover { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
         .scrap-like-btn.liked { color: #ff4757; }
@@ -423,6 +429,7 @@
     <script>
         let currentUser = null;
         let isAdmin = false;
+        let leilaoChannel = null;
 
         function showToast(message, type = 'success', duration = 4000) {
             const container = document.getElementById('toastContainer');
@@ -467,6 +474,72 @@
             }
 
             loadSection('home');
+            
+            initLeilaoRealtime();
+        }
+
+        function initLeilaoRealtime() {
+            if (leilaoChannel) return;
+            
+            leilaoChannel = supabaseClient.channel('leilao-changes')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'comunidades',
+                        filter: 'is_leiloavel=eq.true'
+                    },
+                    (payload) => {
+                        console.log('Leilão atualizado!', payload);
+                        handleLeilaoUpdate(payload);
+                    }
+                )
+                .subscribe();
+        }
+
+        function handleLeilaoUpdate(payload) {
+            const c = payload.new;
+            
+            if (currentLeilaoId === c.id) {
+                const valorEl = document.getElementById('leilaoValor');
+                const licitanteEl = document.getElementById('leilaoLicitante');
+                
+                if (valorEl) {
+                    valorEl.textContent = `R$ ${parseFloat(c.lance_atual || 0).toLocaleString('pt-BR')}`;
+                    valorEl.style.transition = 'none';
+                    valorEl.style.color = '#d4af37';
+                    setTimeout(() => {
+                        valorEl.style.transition = 'color 0.3s';
+                        valorEl.style.color = '#fff';
+                    }, 500);
+                }
+
+                if (c.id_ultimo_licitante && licitanteEl) {
+                    supabaseClient.from('perfis').select('nome_completo').eq('id', c.id_ultimo_licitante).single()
+                        .then(({ data }) => {
+                            if (licitanteEl) licitanteEl.textContent = data?.nome_completo || 'Usuário';
+                        });
+                }
+
+                if (c.data_fim_leilao) {
+                    currentLeilaoEndTime = new Date(c.data_fim_leilao).getTime();
+                }
+
+                showToast('Novo lance detectado! 💰', 'success');
+            }
+
+            const cards = document.querySelectorAll('[data-leilao-id]');
+            cards.forEach(card => {
+                if (card.dataset.leilaoId === c.id) {
+                    const lanceEl = card.querySelector('.lance-display');
+                    if (lanceEl) {
+                        lanceEl.textContent = `R$ ${parseFloat(c.lance_atual || 0).toLocaleString('pt-BR')}`;
+                        lanceEl.style.animation = 'none';
+                        setTimeout(() => lanceEl.style.animation = 'pulseGold 0.5s', 10);
+                    }
+                }
+            });
         }
 
         async function ensureProfile(user) {
@@ -627,7 +700,7 @@
                     const lanceDisplay = c.lance_atual ? `R$ ${parseFloat(c.lance_atual).toLocaleString('pt-BR')}` : 'R$ 0';
                     const badgeLeilao = c.is_leiloavel ? `<span style="background:linear-gradient(135deg,#d4af37,#f9e295);color:#000;font-size:10px;padding:3px 8px;border-radius:10px;font-weight:bold;margin-left:8px;">🔨 LEILÃO</span>` : '';
                     return `
-                        <div class="community-card" onclick="abrirLeilao('${c.id}')" style="cursor:pointer;position:relative;">
+                        <div class="community-card" data-leilao-id="${c.id}" onclick="abrirLeilao('${c.id}')" style="cursor:pointer;position:relative;">
                             <div class="community-cover" style="position:relative;">
                                 ${c.icone || '👥'}
                                 <div style="position:absolute;top:10px;right:10px;font-size:2rem;">🔒</div>
@@ -635,7 +708,7 @@
                             <div class="community-info">
                                 <h3>${c.nome} ${badgeLeilao}</h3>
                                 <p>${c.descricao || ''}</p>
-                                <p style="color:#d4af37;font-weight:bold;font-size:0.9rem;">🏷️ Atual: ${lanceDisplay}</p>
+                                <p class="lance-display" style="color:#d4af37;font-weight:bold;font-size:0.9rem;">🏷️ Atual: ${lanceDisplay}</p>
                                 <button class="btn-participate" style="margin-top:10px;" onclick="event.stopPropagation(); abrirLeilao('${c.id}')">🔨 Participar do Leilão</button>
                             </div>
                         </div>
