@@ -516,7 +516,7 @@
                         currentLeilaoEndTime = new Date(data.data_fim_leilao).getTime();
                     }
                     
-if (c.status_venda === 'vendido') {
+if (data.status_venda === 'vendido') {
                         if (timerEl) {
                             timerEl.textContent = 'VENDIDO!';
                             timerEl.style.color = '#d4af37';
