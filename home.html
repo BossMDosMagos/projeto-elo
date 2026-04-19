@@ -516,24 +516,38 @@
                         currentLeilaoEndTime = new Date(data.data_fim_leilao).getTime();
                     }
                     
-                    if (data.status_venda === 'vendido') {
+if (c.status_venda === 'vendido') {
                         if (timerEl) {
                             timerEl.textContent = 'VENDIDO!';
                             timerEl.style.color = '#d4af37';
                         }
                         showToast('Leilão vendido!', 'success');
                         closeLeilaoModal();
+                        return;
                     }
                 }
+                
+                loadComunidades();
             }, 3000);
         }
 
         function handleLeilaoUpdate(payload) {
             const c = payload.new;
+            console.log(' realtime - Leilao atualizado:', c);
+            
+            if (c.status_venda === 'vendido') {
+                showToast(`Leilão de ${c.nome} foi vendido!`, 'success');
+                loadComunidades();
+                if (currentLeilaoId) {
+                    closeLeilaoModal();
+                }
+                return;
+            }
             
             if (currentLeilaoId === c.id) {
                 const valorEl = document.getElementById('leilaoValor');
                 const licitanteEl = document.getElementById('leilaoLicitante');
+                const timerEl = document.getElementById('leilaoTimer');
                 
                 if (valorEl) {
                     valorEl.textContent = `R$ ${parseFloat(c.lance_atual || 0).toLocaleString('pt-BR')}`;
@@ -554,19 +568,13 @@
 
                 if (c.data_fim_leilao) {
                     currentLeilaoEndTime = new Date(c.data_fim_leilao).getTime();
-                }
-
-                if (c.status_venda === 'vendido') {
-                    showToast('LEILÃO VENDIDO! 🎉', 'success');
-                    closeLeilaoModal();
-                    return;
+                    if (timerEl) {
+                        timerEl.textContent = '+5 min';
+                        timerEl.style.color = '#d4af37';
+                    }
                 }
 
                 showToast('Novo lance detectado! 💰', 'success');
-            }
-
-            if (c.status_venda === 'vendido') {
-                showToast(`Leilão de ${c.nome} foi vendido!`, 'info');
             }
             
             loadComunidades();
@@ -912,36 +920,31 @@
                 return;
             }
 
-            const { data: c } = await supabaseClient.from('comunidades').select('lance_atual, data_fim_leilao').eq('id', currentLeilaoId).single();
-            if (lance <= (c?.lance_atual || 0)) {
-                showToast('O lance deve ser maior que o atual!', 'error');
+            showToast('Processando lance...', 'info');
+
+            const { data, error } = await supabaseClient.rpc('validar_lance_leilao', {
+                p_comunidade_id: currentLeilaoId,
+                p_lance: lance,
+                p_usuario_id: currentUser.id
+            });
+
+            if (error) {
+                showToast('Erro: ' + error.message, 'error');
                 return;
             }
 
-            const now = new Date();
-            let novoTempo = c?.data_fim_leilao;
-            
-            if (c?.data_fim_leilao) {
-                const tempoRestante = new Date(c.data_fim_leilao).getTime() - now.getTime();
-                if (tempoRestante < 300000) {
-                    novoTempo = new Date(now.getTime() + 5 * 60 * 1000).toISOString();
-                    showToast('+5 minutos adicionados ao cronômetro!', 'success');
-                }
+            if (!data?.success) {
+                showToast(data?.message || 'Lance inválido!', 'error');
+                return;
             }
 
-            const { error } = await supabaseClient.from('comunidades').update({
-                lance_atual: lance,
-                id_ultimo_licitante: currentUser.id,
-                data_fim_leilao: novoTempo
-            }).eq('id', currentLeilaoId);
-
-            if (error) {
-                showToast('Erro ao dar lance: ' + error.message, 'error');
-            } else {
-                showToast('Lance dado com sucesso!', 'success');
-                currentLeilaoEndTime = novoTempo ? new Date(novoTempo).getTime() : null;
+            showToast(data.message || 'Lance registrado!', 'success');
+            
+            if (data.novo_tempo) {
                 await loadLeilaoData(currentLeilaoId);
             }
+            
+            loadComunidades();
         }
 
         async function finalizarLeilao() {
