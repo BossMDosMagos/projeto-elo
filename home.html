@@ -528,18 +528,8 @@
 
                 showToast('Novo lance detectado! 💰', 'success');
             }
-
-            const cards = document.querySelectorAll('[data-leilao-id]');
-            cards.forEach(card => {
-                if (card.dataset.leilaoId === c.id) {
-                    const lanceEl = card.querySelector('.lance-display');
-                    if (lanceEl) {
-                        lanceEl.textContent = `R$ ${parseFloat(c.lance_atual || 0).toLocaleString('pt-BR')}`;
-                        lanceEl.style.animation = 'none';
-                        setTimeout(() => lanceEl.style.animation = 'pulseGold 0.5s', 10);
-                    }
-                }
-            });
+            
+            loadComunidades();
         }
 
         async function ensureProfile(user) {
@@ -753,6 +743,7 @@
                 leilaoInterval = null;
             }
             currentLeilaoId = null;
+            loadComunidades();
         }
 
         async function loadLeilaoData(id) {
