@@ -335,15 +335,81 @@
             <button type="button" onclick="darLance()" style="background:linear-gradient(180deg,#f9e295,#d4af37);color:#000;border:none;padding:15px;border-radius:25px;font-weight:bold;cursor:pointer;width:100%;font-size:16px;margin-top:10px;">💰 Dar Lance</button>
             <div style="text-align:center;margin-top:15px;color:#555;font-size:0.75rem;">
                 ⚠️ Lances nos últimos 5 minutos adicionam +5 minutos ao cronômetro
-            </div>
+</div>
         </div>
     </div>
-                <div class="form-group">
-                    <label>Conteúdo</label>
-                    <textarea id="topicContent" placeholder="Descreva sua dúvida ou topic..."></textarea>
+
+    <div class="modal" id="gerenciarModal">
+        <div class="modal-content" style="max-width:600px;background:linear-gradient(135deg,#0a0a0a,#151515);border:2px solid #d4af37;">
+            <button class="modal-close" onclick="closeGerenciarModal()">&times;</button>
+            <h2 style="color:#d4af37;text-align:center;margin-bottom:5px;">🛠️ Gerenciar Comunidade</h2>
+            <p id="gerenciarNome" style="color:#888;text-align:center;margin-bottom:25px;font-size:1.1rem;font-weight:bold;"></p>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="color:#888;font-size:0.8rem;">Nome</label>
+                    <input type="text" id="gerenciarNomeInput" style="background:#111;border:1px solid #333;color:#fff;padding:10px;border-radius:8px;width:100%;">
                 </div>
-                <button type="submit" class="btn-save">Criar Tópico</button>
-            </form>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label style="color:#888;font-size:0.8rem;">Ícone</label>
+                    <select id="gerenciarIcone" style="background:#111;border:1px solid #333;color:#fff;padding:10px;border-radius:8px;width:100%;">
+                        <option value="👥">👥 Padrão</option>
+                        <option value="🍎">🍎 Apple</option>
+                        <option value="📱">📱 Tech</option>
+                        <option value="🎮">🎮 Games</option>
+                        <option value="💻">💻 DEV</option>
+                        <option value="🎬">🎬 Filmes</option>
+                        <option value="⚽">⚽ Sports</option>
+                        <option value="🚗">🚗 Carros</option>
+                        <option value="💰">💰 Business</option>
+                        <option value="🎵">🎵 Música</option>
+                        <option value="🌐">🌐 Mundo</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label style="color:#888;font-size:0.8rem;">Descrição</label>
+                <textarea id="gerenciarDesc" style="background:#111;border:1px solid #333;color:#fff;padding:10px;border-radius:8px;width:100%;min-height:60px;resize:vertical;"></textarea>
+            </div>
+            
+            <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(212,175,55,0.2);border-radius:8px;padding:15px;margin-bottom:15px;">
+                <div style="color:#d4af37;font-size:0.85rem;margin-bottom:12px;font-weight:bold;">⚔️ Configurações de Leilão</div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <input type="checkbox" id="gerenciarLeiloavel" style="width:18px;height:18px;accent-color:#d4af37;">
+                    <label for="gerenciarLeiloavel" style="color:#fff;cursor:pointer;">🔨 Colocar para Leilão (7 dias)</label>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;">
+                    <div>
+                        <label style="color:#888;font-size:0.75rem;">Lance Atual (R$)</label>
+                        <input type="number" id="gerenciarLance" style="background:#111;border:1px solid #333;color:#d4af37;padding:8px;border-radius:6px;width:100%;font-weight:bold;">
+                    </div>
+                    <div>
+                        <label style="color:#888;font-size:0.75rem;">Status</label>
+                        <select id="gerenciarStatus" style="background:#111;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;width:100%;">
+                            <option value="aberto">🟢 Aberto</option>
+                            <option value="processando">🟡 Processando</option>
+                            <option value="vendido">🔴 Vendido</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="color:#888;font-size:0.75rem;">Último Licitante</label>
+                        <div id="gerenciarLicitante" style="color:#fff;font-size:0.85rem;padding:8px 0;">-</div>
+                    </div>
+                </div>
+                <div style="margin-top:10px;">
+                    <label style="color:#888;font-size:0.75rem;">Data Fim Leilão</label>
+                    <input type="datetime-local" id="gerenciarDataFim" style="background:#111;border:1px solid #333;color:#fff;padding:8px;border-radius:6px;width:100%;">
+                </div>
+            </div>
+            
+            <div style="display:flex;gap:10px;">
+                <button onclick="salvarGerenciamento()" style="flex:1;background:linear-gradient(180deg,#f9e295,#d4af37);color:#000;border:none;padding:12px;border-radius:20px;font-weight:bold;cursor:pointer;">💾 Salvar Alterações</button>
+                <button onclick="transferirDono()" style="flex:1;background:transparent;border:1px solid #d4af37;color:#d4af37;padding:12px;border-radius:20px;font-weight:bold;cursor:pointer;">🔄 Transferir Dono</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:10px;">
+                <button onclick="excluirComunidade()" style="flex:1;background:transparent;border:1px solid #c00;color:#c00;padding:12px;border-radius:20px;font-weight:bold;cursor:pointer;">🗑️ Excluir Comunidade</button>
+            </div>
         </div>
     </div>
 
@@ -791,7 +857,121 @@
         }
 
         function gerenciarComunidade(id) {
-            showToast('Função de gerenciamento em desenvolvimento!', 'info');
+            openGerenciarModal(id);
+        }
+
+        let currentGerenciarId = null;
+
+        async function openGerenciarModal(id) {
+            currentGerenciarId = id;
+            const { data: c } = await supabaseClient.from('comunidades').select('*').eq('id', id).single();
+            if (!c) return;
+
+            document.getElementById('gerenciarNome').textContent = c.nome;
+            document.getElementById('gerenciarNomeInput').value = c.nome;
+            document.getElementById('gerenciarIcone').value = c.icone || '👥';
+            document.getElementById('gerenciarDesc').value = c.descricao || '';
+            document.getElementById('gerenciarLeiloavel').checked = c.is_leiloavel || false;
+            document.getElementById('gerenciarLance').value = c.lance_atual || 0;
+            document.getElementById('gerenciarStatus').value = c.status_venda || 'aberto';
+            
+            if (c.id_ultimo_licitante) {
+                const { data: perfil } = await supabaseClient.from('perfis').select('nome_completo').eq('id', c.id_ultimo_licitante).single();
+                document.getElementById('gerenciarLicitante').textContent = perfil?.nome_completo || 'Usuário';
+            } else {
+                document.getElementById('gerenciarLicitante').textContent = '-';
+            }
+
+            if (c.data_fim_leilao) {
+                const dt = new Date(c.data_fim_leilao);
+                document.getElementById('gerenciarDataFim').value = dt.toISOString().slice(0, 16);
+            } else {
+                document.getElementById('gerenciarDataFim').value = '';
+            }
+
+            document.getElementById('gerenciarModal').classList.add('show');
+        }
+
+        function closeGerenciarModal() {
+            document.getElementById('gerenciarModal').classList.remove('show');
+            currentGerenciarId = null;
+        }
+
+        async function salvarGerenciamento() {
+            const nome = document.getElementById('gerenciarNomeInput').value.trim();
+            const icone = document.getElementById('gerenciarIcone').value;
+            const descricao = document.getElementById('gerenciarDesc').value.trim();
+            const isLeiloavel = document.getElementById('gerenciarLeiloavel').checked;
+            const lance = parseFloat(document.getElementById('gerenciarLance').value) || 0;
+            const status = document.getElementById('gerenciarStatus').value;
+            const dataFim = document.getElementById('gerenciarDataFim').value;
+
+            if (!nome) {
+                showToast('Nome é obrigatório!', 'error');
+                return;
+            }
+
+            const updateData = {
+                nome: nome,
+                icone: icone,
+                descricao: descricao,
+                is_leiloavel: isLeiloavel,
+                lance_atual: lance,
+                status_venda: status
+            };
+
+            if (dataFim && isLeiloavel) {
+                updateData.data_fim_leilao = new Date(dataFim).toISOString();
+            }
+
+            const { error } = await supabaseClient.from('comunidades').update(updateData).eq('id', currentGerenciarId);
+
+            if (error) {
+                showToast('Erro ao salvar: ' + error.message, 'error');
+            } else {
+                showToast('Alterações salvas!', 'success');
+                closeGerenciarModal();
+                loadComunidades();
+            }
+        }
+
+        async function transferirDono() {
+            const novoDono = prompt('Digite o email do novo dono:');
+            if (!novoDono) return;
+
+            const { data: usuario } = await supabaseClient.from('perfis').select('id').eq('email', novoDono).single();
+            
+            if (!usuario) {
+                const { data: usuarios } = await supabaseClient.from('perfis').select('id, email').ilike('email', '%' + novoDono + '%');
+                if (!usuarios || usuarios.length === 0) {
+                    showToast('Usuário não encontrado!', 'error');
+                    return;
+                }
+                if (confirm('Encontrado: ' + usuarios[0].email + '. Transferir?')) {
+                    await supabaseClient.from('comunidades').update({ criado_por: usuarios[0].id }).eq('id', currentGerenciarId);
+                    showToast('Dono transferido!', 'success');
+                    closeGerenciarModal();
+                }
+                return;
+            }
+
+            await supabaseClient.from('comunidades').update({ criado_por: usuario.id }).eq('id', currentGerenciarId);
+            showToast('Dono transferido!', 'success');
+            closeGerenciarModal();
+        }
+
+        async function excluirComunidade() {
+            if (!confirm('⚠️ Tem certeza EXTREMA que deseja EXCLUIR esta comunidade? Não há volta!')) return;
+            if (!confirm('Isso excluirá TODOS os dados, tópicos e comentários. Continuar?')) return;
+
+            await supabaseClient.from('comentarios').delete().eq('comunidade_id', currentGerenciarId);
+            await supabaseClient.from('topicos').delete().eq('comunidade_id', currentGerenciarId);
+            await supabaseClient.from('membros_comunidades').delete().eq('comunidade_id', currentGerenciarId);
+            await supabaseClient.from('comunidades').delete().eq('id', currentGerenciarId);
+
+            showToast('Comunidade excluída!', 'success');
+            closeGerenciarModal();
+            loadComunidades();
         }
 
         async function renderizarTopicos(topicos, comunidadeId) {
