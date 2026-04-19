@@ -430,6 +430,7 @@
         let currentUser = null;
         let isAdmin = false;
         let leilaoChannel = null;
+        let LeilaoRefreshInterval = null;
 
         function showToast(message, type = 'success', duration = 4000) {
             const container = document.getElementById('toastContainer');
@@ -496,6 +497,20 @@
                     }
                 )
                 .subscribe();
+            
+            LeilaoRefreshInterval = setInterval(async () => {
+                if (!currentLeilaoId) return;
+                const { data } = await supabaseClient.from('comunidades').select('*').eq('id', currentLeilaoId).single();
+                if (data) {
+                    const valorEl = document.getElementById('leilaoValor');
+                    const licitanteEl = document.getElementById('leilaoLicitante');
+                    if (valorEl) valorEl.textContent = `R$ ${parseFloat(data.lance_atual || 0).toLocaleString('pt-BR')}`;
+                    if (data.id_ultimo_licitante && licitanteEl) {
+                        const { data: p } = await supabaseClient.from('perfis').select('nome_completo').eq('id', data.id_ultimo_licitante).single();
+                        if (licitanteEl) licitanteEl.textContent = p?.nome_completo || 'Usuário';
+                    }
+                }
+            }, 5000);
         }
 
         function handleLeilaoUpdate(payload) {
@@ -808,6 +823,10 @@
                 leilaoInterval = null;
             }
             currentLeilaoId = null;
+            if (LeilaoRefreshInterval) {
+                clearInterval(LeilaoRefreshInterval);
+                LeilaoRefreshInterval = null;
+            }
             loadComunidades();
         }
 
