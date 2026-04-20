@@ -72,7 +72,11 @@ async function b2Auth(): Promise<{ apiUrl: string; authToken: string; allowed: a
 async function getUploadUrl(apiUrl: string, authToken: string, allowed: any): Promise<{ uploadUrl: string; uploadAuthToken: string }> {
   let bucketId = BUCKET_ID || allowed?.bucketId;
   
-  console.log("getUploadUrl called:", { BUCKET_ID, allowedBucketId: allowed?.bucketId, allowedBucketName: allowed?.bucketName });
+  console.log("=== getUploadUrl DEBUG ===");
+  console.log("BUCKET_ID from env:", BUCKET_ID);
+  console.log("allowed.bucketId:", allowed?.bucketId);
+  console.log("Final bucketId being used:", bucketId);
+  console.log("=========================");
   
   if (!bucketId) {
     throw new Error("BUCKET_ID não configurado. Configure B2_BUCKET_ID nos secrets ou use uma chave com bucketrestringido.");
