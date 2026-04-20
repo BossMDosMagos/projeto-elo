@@ -330,6 +330,15 @@
                 <input type="email" id="email" disabled>
                 <small style="color: #555; font-size: 11px; margin-top: 5px; display: block;">O e-mail não pode ser alterado.</small>
             </div>
+            <div class="form-group">
+                <label for="newPassword">Nova Senha</label>
+                <input type="password" id="newPassword" placeholder="Deixe em branco para manter a senha atual">
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">Confirmar Nova Senha</label>
+                <input type="password" id="confirmPassword" placeholder="Confirme a nova senha">
+            </div>
+            <button type="button" class="btn-save" onclick="alterarSenha()" style="margin-top: 10px; background: linear-gradient(180deg, #c00, #900);">Alterar Senha</button>
         </div>
 
         <div style="text-align: center; margin-top: 30px;">
@@ -511,6 +520,36 @@
             saveBtn.disabled = false;
             saveBtn.textContent = 'Salvar Alterações';
         });
+
+        async function alterarSenha() {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            
+            if (!newPass && !confirmPass) {
+                alert('Preencha os campos de senha nova.');
+                return;
+            }
+            
+            if (newPass !== confirmPass) {
+                alert('As senhas não conferem!');
+                return;
+            }
+            
+            if (newPass.length < 6) {
+                alert('Senha deve ter pelo menos 6 caracteres.');
+                return;
+            }
+            
+            const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+            
+            if (error) {
+                alert('Erro: ' + error.message);
+            } else {
+                alert('Senha alterada com sucesso!');
+                document.getElementById('newPassword').value = '';
+                document.getElementById('confirmPassword').value = '';
+            }
+        }
 
         loadProfile();
     </script>
