@@ -69,15 +69,13 @@ async function b2Auth(): Promise<{ apiUrl: string; authToken: string; allowed: a
 }
 
 async function getUploadUrl(apiUrl: string, authToken: string, allowed: any): Promise<{ uploadUrl: string; uploadAuthToken: string }> {
-  let bucketId: string;
+  // If key is restricted to a specific bucket, use that bucketId directly
+  let bucketId = allowed?.bucketId;
   
-  // If key is restricted to a specific bucket, use that bucketId
-  if (allowed?.bucketId) {
-    bucketId = allowed.bucketId;
-    console.log("Using restricted bucketId:", bucketId);
+  if (bucketId) {
+    console.log("Key restricted to bucketId:", bucketId, "bucketName:", allowed?.bucketName);
   } else {
-    // Otherwise, list buckets to find the right one
-    console.log("Listing buckets...");
+    console.log("Key not restricted - listing buckets...");
     const bucketResp = await fetch(`${apiUrl}/b2api/v2/b2_list_buckets`, {
       method: "POST",
       headers: {
@@ -97,17 +95,20 @@ async function getUploadUrl(apiUrl: string, authToken: string, allowed: any): Pr
     console.log("Buckets response:", JSON.stringify(bucketData));
     
     if (!bucketData.buckets || bucketData.buckets.length === 0) {
-      throw new Error("No buckets found for this account");
+      throw new Error("No buckets found");
     }
     
-    // Find bucket by name
     const bucket = bucketData.buckets.find((b: any) => b.bucketName === BUCKET_NAME);
     if (!bucket) {
-      throw new Error(`Bucket "${BUCKET_NAME}" not found. Available: ${bucketData.buckets.map((b: any) => b.bucketName).join(", ")}`);
+      throw new Error(`Bucket "${BUCKET_NAME}" not found`);
     }
     
     bucketId = bucket.bucketId;
     console.log("Found bucketId:", bucketId);
+  }
+  
+  if (!bucketId) {
+    throw new Error("Could not determine bucketId");
   }
   
   console.log("Getting upload URL for bucket:", bucketId);
