@@ -1740,30 +1740,33 @@ if (data.status_venda === 'vendido') {
         async function selecionarFoto(input) {
             if (!input.files[0]) return;
             const file = input.files[0];
-            
-            document.getElementById('uploadProgress').style.display = 'block';
-            document.getElementById('progressBar').style.width = '30%';
 
-            // Converte para base64
-            const base64 = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.readAsDataURL(file);
-            });
+            showToast('🔄 Redimensionando e padronizando...', 'info');
 
             try {
+                const processed = await processarImagem(file);
+                
+                showToast('⏳ Enviando...', 'info');
+                
+                document.getElementById('uploadProgress').style.display = 'block';
+                document.getElementById('progressBar').style.width = '50%';
+
                 const resp = await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: file.name,
-                        type: file.type,
-                        base64: base64,
+                        name: processed.name,
+                        type: 'image/jpeg',
+                        base64: processed.base64,
                         userId: currentUser.id
                     })
                 });
 
-                document.getElementById('progressBar').style.width = '70%';
+                if (!resp.ok) {
+                    const errData = await resp.json();
+                    throw new Error(errData.error || 'Erro no servidor');
+                }
+
                 const data = await resp.json();
                 if (data.error) throw new Error(data.error);
 
@@ -1774,13 +1777,13 @@ if (data.status_venda === 'vendido') {
                 });
 
                 document.getElementById('progressBar').style.width = '100%';
-                showToast('Foto enviada!', 'success');
+                showToast('📷 Foto publicada no seu álbum!', 'success');
                 
                 setTimeout(() => {
                     document.getElementById('uploadProgress').style.display = 'none';
                     document.getElementById('progressBar').style.width = '0%';
                     input.value = '';
-                }, 1000);
+                }, 1500);
 
                 loadFotos();
             } catch (err) {
@@ -1789,19 +1792,53 @@ if (data.status_venda === 'vendido') {
             }
         }
 
-        function comprimirImagem(file) {
-            return new Promise((resolve) => {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+        function processarImagem(file) {
+            return new Promise((resolve, reject) => {
                 const img = new Image();
                 img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
                     let w = img.width;
                     let h = img.height;
-                    if (w > 1200) { h = (h * 1200) / w; w = 1200; }
-                    canvas.width = w; canvas.height = h;
+                    const maxSize = 1200;
+                    
+                    if (w > maxSize || h > maxSize) {
+                        if (w > h) {
+                            h = Math.round((h * maxSize) / w);
+                            w = maxSize;
+                        } else {
+                            w = Math.round((w * maxSize) / h);
+                            h = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = w;
+                    canvas.height = h;
                     ctx.drawImage(img, 0, 0, w, h);
-                    canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                    
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            reject(new Error('Falha ao processar imagem'));
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const base64 = reader.result.split(',')[1];
+                            resolve({
+                                base64: base64,
+                                name: file.name.replace(/\.[^/.]+$/, '') + '.jpg',
+                                width: w,
+                                height: h,
+                                size: blob.size
+                            });
+                        };
+                        reader.onerror = () => reject(new Error('Erro ao converter base64'));
+                        reader.readAsDataURL(blob);
+                    }, 'image/jpeg', 0.7);
                 };
+                img.onerror = () => reject(new Error('Erro ao carregar imagem'));
                 img.src = URL.createObjectURL(file);
             });
         }
