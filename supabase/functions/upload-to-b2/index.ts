@@ -8,6 +8,7 @@ const B2_API = "https://api.backblazeb2.com";
 const B2_KEY_ID = Deno.env.get("B2_KEY_ID") || "";
 const B2_APP_KEY = Deno.env.get("B2_APPLICATION_KEY") || "";
 const BUCKET_NAME = "Elo-User-Albums";
+const BUCKET_ID = Deno.env.get("B2_BUCKET_ID") || "";
 
 console.log("B2_KEY_ID:", B2_KEY_ID ? "set" : "NOT SET");
 
@@ -69,47 +70,15 @@ async function b2Auth(): Promise<{ apiUrl: string; authToken: string; allowed: a
 }
 
 async function getUploadUrl(apiUrl: string, authToken: string, allowed: any): Promise<{ uploadUrl: string; uploadAuthToken: string }> {
-  // If key is restricted to a specific bucket, use that bucketId directly
-  let bucketId = allowed?.bucketId;
+  let bucketId = BUCKET_ID || allowed?.bucketId;
   
-  if (bucketId) {
-    console.log("Key restricted to bucketId:", bucketId, "bucketName:", allowed?.bucketName);
-  } else {
-    console.log("Key not restricted - listing buckets...");
-    const bucketResp = await fetch(`${apiUrl}/b2api/v2/b2_list_buckets`, {
-      method: "POST",
-      headers: {
-        "Authorization": authToken,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ accountId: B2_KEY_ID })
-    });
-    
-    if (!bucketResp.ok) {
-      const err = await bucketResp.text();
-      console.error("B2 List Buckets error:", bucketResp.status, err);
-      throw new Error(`B2 List Buckets failed: ${bucketResp.status} - ${err}`);
-    }
-    
-    const bucketData = await bucketResp.json();
-    console.log("Buckets response:", JSON.stringify(bucketData));
-    
-    if (!bucketData.buckets || bucketData.buckets.length === 0) {
-      throw new Error("No buckets found");
-    }
-    
-    const bucket = bucketData.buckets.find((b: any) => b.bucketName === BUCKET_NAME);
-    if (!bucket) {
-      throw new Error(`Bucket "${BUCKET_NAME}" not found`);
-    }
-    
-    bucketId = bucket.bucketId;
-    console.log("Found bucketId:", bucketId);
-  }
+  console.log("getUploadUrl called:", { BUCKET_ID, allowedBucketId: allowed?.bucketId, allowedBucketName: allowed?.bucketName });
   
   if (!bucketId) {
-    throw new Error("Could not determine bucketId");
+    throw new Error("BUCKET_ID não configurado. Configure B2_BUCKET_ID nos secrets ou use uma chave com bucketrestringido.");
   }
+  
+  console.log("Using bucketId:", bucketId);
   
   console.log("Getting upload URL for bucket:", bucketId);
   
