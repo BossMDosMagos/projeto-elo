@@ -7,32 +7,15 @@ const corsHeaders = {
 const B2_API = "https://api.backblazeb2.com";
 const B2_KEY_ID = Deno.env.get("B2_KEY_ID") || "";
 const B2_APP_KEY = Deno.env.get("B2_APPLICATION_KEY") || "";
-const BUCKET_NAME = "Elo-User-Albums";
-const BUCKET_ID = Deno.env.get("B2_BUCKET_ID") || "";
+const BUCKET_ID = Deno.env.get("B2_BUCKET_ID") || "b6ef232d8bd4aab391df0517";
 
+console.log("=== B2 UPLOAD FUNCTION ===");
 console.log("B2_KEY_ID:", B2_KEY_ID ? "set" : "NOT SET");
+console.log("BUCKET_ID:", BUCKET_ID);
+console.log("=========================");
 
-interface B2AuthResponse {
-  accountId: string;
-  allowed: {
-    bucketId: string | null;
-    bucketName: string | null;
-    namePrefix: string | null;
-    capabilities: string[];
-  };
-  apiInfo: {
-    storageApi: {
-      apiUrl: string;
-      authToken: string;
-      capabilities: string[];
-    };
-  };
-}
-
-async function b2Auth(): Promise<{ apiUrl: string; authToken: string; allowed: any }> {
+async function b2Auth(): Promise<{ apiUrl: string; authToken: string }> {
   const creds = btoa(`${B2_KEY_ID}:${B2_APP_KEY}`);
-  
-  console.log("Authenticating with B2...");
   
   const resp = await fetch(`${B2_API}/b2api/v2/b2_authorize_account`, {
     method: "GET",
@@ -44,79 +27,32 @@ async function b2Auth(): Promise<{ apiUrl: string; authToken: string; allowed: a
   
   if (!resp.ok) {
     const err = await resp.text();
-    console.error("B2 Auth error:", resp.status, err);
     throw new Error(`B2 Auth failed: ${resp.status} - ${err}`);
   }
   
-  const data: B2AuthResponse = await resp.json();
-  console.log("B2 Auth response keys:", Object.keys(data));
-  console.log("B2 capabilities:", data.allowed?.capabilities, data.apiInfo?.storageApi?.capabilities);
+  const data = await resp.json();
+  console.log("Auth response:", JSON.stringify(data));
   
-  // Check if key has write capabilities
-  const caps = data.allowed?.capabilities || data.apiInfo?.storageApi?.capabilities || [];
-  if (!caps.includes("writeFiles")) {
-    console.error("Key capabilities:", caps);
-    throw new Error(`Key does not have writeFiles permission. Current capabilities: ${caps.join(", ")}`);
+  // Handle both API formats
+  const apiUrl = data.apiInfo?.storageApi?.apiUrl || data.storageApi?.apiUrl;
+  const authToken = data.apiInfo?.storageApi?.authToken || data.storageApi?.authToken;
+  
+  if (!apiUrl || !authToken) {
+    console.error("Invalid auth response:", data);
+    throw new Error(`Invalid B2 auth response: ${JSON.stringify(data)}`);
   }
   
-  const apiUrl = data.apiInfo.storageApi.apiUrl;
-  const authToken = data.apiInfo.storageApi.authToken;
-  const allowed = data.allowed;
+  console.log("Auth OK - apiUrl:", apiUrl);
   
-  console.log("Auth success - apiUrl:", apiUrl);
-  console.log("Allowed:", JSON.stringify(allowed));
-  
-  return { apiUrl, authToken, allowed };
-}
-
-async function getUploadUrl(apiUrl: string, authToken: string, allowed: any): Promise<{ uploadUrl: string; uploadAuthToken: string }> {
-  let bucketId = BUCKET_ID || allowed?.bucketId;
-  
-  console.log("=== getUploadUrl DEBUG ===");
-  console.log("BUCKET_ID from env:", BUCKET_ID);
-  console.log("allowed.bucketId:", allowed?.bucketId);
-  console.log("Final bucketId being used:", bucketId);
-  console.log("=========================");
-  
-  if (!bucketId) {
-    throw new Error("BUCKET_ID não configurado. Configure B2_BUCKET_ID nos secrets ou use uma chave com bucketrestringido.");
-  }
-  
-  console.log("Using bucketId:", bucketId);
-  
-  console.log("Getting upload URL for bucket:", bucketId);
-  
-  const urlResp = await fetch(`${apiUrl}/b2api/v2/b2_get_upload_url`, {
-    method: "POST",
-    headers: {
-      "Authorization": authToken,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ bucketId })
-  });
-  
-  const urlText = await urlResp.text();
-  console.log("Get Upload URL response:", urlResp.status, urlText);
-  
-  if (!urlResp.ok) {
-    throw new Error(`B2 Get Upload URL failed: ${urlResp.status} - ${urlText}`);
-  }
-  
-  const urlData = JSON.parse(urlText);
-  
-  if (!urlData.uploadUrl || !urlData.authorizationToken) {
-    console.error("Invalid upload URL response:", urlData);
-    throw new Error(`Invalid upload URL response: ${JSON.stringify(urlData)}`);
-  }
-  
-  return {
-    uploadUrl: urlData.uploadUrl,
-    uploadAuthToken: urlData.authorizationToken
-  };
+  return { apiUrl, authToken };
 }
 
 async function uploadToB2(base64: string, name: string, userId: string, type: string) {
-  console.log("Starting upload:", userId, name, type);
+  console.log("=== UPLOAD START ===");
+  console.log("userId:", userId);
+  console.log("name:", name);
+  console.log("type:", type);
+  console.log("bucketId:", BUCKET_ID);
   
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
@@ -125,34 +61,60 @@ async function uploadToB2(base64: string, name: string, userId: string, type: st
   }
   
   const fileName = `usuarios/${userId}/album/${Date.now()}_${name}`;
-  console.log("File name:", fileName);
   
-  const { apiUrl, authToken, allowed } = await b2Auth();
-  console.log("Got API URL:", apiUrl);
+  const { apiUrl, authToken } = await b2Auth();
   
-  const { uploadUrl, uploadAuthToken } = await getUploadUrl(apiUrl, authToken, allowed);
-  console.log("Got Upload URL:", uploadUrl);
+  console.log("Getting upload URL for bucket:", BUCKET_ID);
   
-  const uploadResp = await fetch(uploadUrl, {
+  // Get upload URL using BUCKET_ID
+  const urlResp = await fetch(`${apiUrl}/b2api/v2/b2_get_upload_url`, {
     method: "POST",
     headers: {
-      "Authorization": uploadAuthToken,
+      "Authorization": authToken,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ bucketId: BUCKET_ID })
+  });
+  
+  const urlText = await urlResp.text();
+  console.log("b2_get_upload_url response:", urlResp.status, urlText);
+  
+  if (!urlResp.ok) {
+    throw new Error(`B2 Get Upload URL failed (${urlResp.status}): ${urlText}`);
+  }
+  
+  const urlData = JSON.parse(urlText);
+  
+  if (!urlData.uploadUrl) {
+    console.error("No uploadUrl in response:", urlData);
+    throw new Error(`B2 didn't return uploadUrl. Response: ${JSON.stringify(urlData)}`);
+  }
+  
+  console.log("Upload URL:", urlData.uploadUrl);
+  
+  // Upload the file
+  const uploadResp = await fetch(urlData.uploadUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": urlData.authorizationToken,
       "Content-Type": type || "image/jpeg",
       "X-Bz-File-Name": fileName
     },
     body: bytes
   });
   
+  const uploadText = await uploadResp.text();
+  console.log("Upload response:", uploadResp.status, uploadText);
+  
   if (!uploadResp.ok) {
-    const err = await uploadResp.text();
-    console.error("B2 Upload error:", uploadResp.status, err);
-    throw new Error(`B2 Upload failed: ${uploadResp.status} - ${err}`);
+    throw new Error(`B2 Upload failed (${uploadResp.status}): ${uploadText}`);
   }
   
-  const uploadData = await uploadResp.json();
-  console.log("Upload success:", JSON.stringify(uploadData));
+  const uploadData = JSON.parse(uploadText);
   
-  const fileUrl = `https://f005.backblazeb2.com/file/${BUCKET_NAME}/${fileName}`;
+  const fileUrl = `https://f005.backblazeb2.com/file/Elo-User-Albums/${fileName}`;
+  
+  console.log("=== UPLOAD SUCCESS ===");
   
   return {
     url: fileUrl,
@@ -169,7 +131,7 @@ Deno.serve(async (req) => {
   try {
     if (!B2_KEY_ID || !B2_APP_KEY) {
       return new Response(
-        JSON.stringify({ error: "Secrets not configured" }),
+        JSON.stringify({ error: "B2 credentials not configured" }),
         { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -192,7 +154,7 @@ Deno.serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("Upload error:", error.message);
+    console.error("ERROR:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
