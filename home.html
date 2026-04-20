@@ -1740,20 +1740,27 @@ if (data.status_venda === 'vendido') {
         async function selecionarFoto(input) {
             if (!input.files[0]) return;
             const file = input.files[0];
-            const compressed = await comprimirImagem(file);
             
             document.getElementById('uploadProgress').style.display = 'block';
             document.getElementById('progressBar').style.width = '30%';
 
-            const formData = new FormData();
-            formData.append('file', compressed);
-            formData.append('userId', currentUser.id);
+            // Converte para base64
+            const base64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.readAsDataURL(file);
+            });
 
             try {
                 const resp = await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2', {
                     method: 'POST',
-                    body: formData,
-                    headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscmdzdnR6dHlpamd1cnB2dWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjE1NDQsImV4cCI6MjA5MTkzNzU0NH0.uAs9KqohlVaJFGWp-YwzjxKGf36Lh0H4uk6nGM0GjhY' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: file.name,
+                        type: file.type,
+                        base64: base64,
+                        userId: currentUser.id
+                    })
                 });
 
                 document.getElementById('progressBar').style.width = '70%';
