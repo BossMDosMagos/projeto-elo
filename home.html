@@ -1742,32 +1742,31 @@ if (data.status_venda === 'vendido') {
             const file = input.files[0];
             const compressed = await comprimirImagem(file);
             
-            const formData = new FormData();
-            formData.append('file', compressed);
-            formData.append('userId', currentUser.id);
-
             document.getElementById('uploadProgress').style.display = 'block';
             document.getElementById('progressBar').style.width = '30%';
 
             try {
-                const resp = await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2', {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlscmdzdnR6dHlpamd1cnB2dWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNjE1NDQsImV4cCI6MjA5MTkzNzU0NH0.uAs9KqohlVaJFGWp-YwzjxKGf36Lh0H4uk6nGM0GjhY' }
+                const key = `usuarios/${currentUser.id}/album/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+                const url = `https://elo-user-albums.s3.us-west-002.backblazeb2.com/${key}`;
+                
+                // Upload direto para B2
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'K005cDdkUBXha210yrz7tVgt8F/eB9M',
+                        'Content-Type': 'image/jpeg'
+                    },
+                    body: compressed
                 });
-
-                document.getElementById('progressBar').style.width = '70%';
-                const data = await resp.json();
-                if (data.error) throw new Error(data.error);
 
                 await supabaseClient.from('fotos_album').insert({
                     usuario_id: currentUser.id,
-                    url: data.url,
-                    key: data.key
+                    url: url,
+                    key: key
                 });
 
                 document.getElementById('progressBar').style.width = '100%';
-                document.getElementById('progressText').textContent = 'Foto enviada!';
+                showToast('Foto enviada!', 'success');
                 
                 setTimeout(() => {
                     document.getElementById('uploadProgress').style.display = 'none';
