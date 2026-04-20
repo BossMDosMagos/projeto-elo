@@ -352,11 +352,26 @@
         const loginSuccess = document.getElementById('loginSuccess');
         const submitBtn = document.getElementById('submitBtn');
 
+        // Recupera email salvo
+        const savedEmail = localStorage.getItem('elo_remembered_email');
+        if (savedEmail) {
+            document.getElementById('email').value = savedEmail;
+            document.getElementById('remember').checked = true;
+        }
+
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
+
+            // Salva ou remove email
+            if (remember) {
+                localStorage.setItem('elo_remembered_email', email);
+            } else {
+                localStorage.removeItem('elo_remembered_email');
+            }
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Entrando...';
