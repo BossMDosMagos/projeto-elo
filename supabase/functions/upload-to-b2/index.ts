@@ -10,7 +10,17 @@ const s3 = new S3Client({
   },
 });
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+  
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File;
@@ -19,7 +29,7 @@ Deno.serve(async (req) => {
     if (!file || !userId) {
       return new Response(JSON.stringify({ error: "Dados incompletos" }), { 
         status: 400,
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
 
@@ -38,12 +48,12 @@ Deno.serve(async (req) => {
     const url = `https://elo-user-albums.s3.us-west-002.backblazeb2.com/${key}`;
 
     return new Response(JSON.stringify({ url, key }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { "Content-Type": "application/json" }
+      headers: { "Content-Type": "application/json", ...corsHeaders }
     });
   }
 });
