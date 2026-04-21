@@ -139,7 +139,8 @@ Deno.serve(async (req) => {
       headers: {
         "Authorization": uploadAuthToken,
         "Content-Type": type || "image/jpeg",
-        "X-Bz-File-Name": fileName
+        "X-Bz-File-Name": fileName,
+        "X-Bz-Content-Sha1": "do_not_verify"
       },
       body: bytes
     });
