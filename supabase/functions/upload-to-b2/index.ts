@@ -75,14 +75,17 @@ Deno.serve(async (req) => {
     }
 
     const authData = JSON.parse(authText);
-    const apiUrl = authData.apiInfo?.storageApi?.apiUrl;
-    const authToken = authData.apiInfo?.storageApi?.authToken;
     
-    console.log(">>> Auth OK, apiUrl:", apiUrl);
+    // Handle both response formats
+    const apiUrl = authData.apiUrl || authData.apiInfo?.storageApi?.apiUrl;
+    const authToken = authData.authorizationToken || authData.apiInfo?.storageApi?.authToken;
+    const accountId = authData.accountId;
+    
+    console.log(">>> Auth OK, apiUrl:", apiUrl, "accountId:", accountId);
 
     if (!apiUrl || !authToken) {
-      console.error(">>> Invalid auth data:", authData);
-      return new Response(JSON.stringify({ error: `Invalid B2 response: ${authText}` }), {
+      console.error(">>> No apiUrl or authToken in:", authData);
+      return new Response(JSON.stringify({ error: `Missing apiUrl/authToken in B2 response: ${authText}` }), {
         status: 500, headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
