@@ -67,11 +67,18 @@ async function getSignedUrl(apiUrl: string, authToken: string, fileName: string)
   }
 
   const urlData = JSON.parse(urlText);
-  const downloadUrl = urlData.downloadUrl;
-  const downloadAuthToken = urlData.authorizationToken;
+  // b2_get_download_authorization returns URL with auth token built in
+  const authorizationForPath = urlData.authorizationToken || urlData.apiUrlToken;
+  const downloadBase = urlData.downloadUrl || "https://f005.backblazeb2.com";
   
-  // Build signed URL
-  return `${downloadUrl}/file/${BUCKET_NAME}/${fileName}?Authorization=${downloadAuthToken}`;
+  console.log(">>> Got auth token:", authorizationForPath ? "YES" : "NO", "downloadBase:", downloadBase);
+  
+  if (!authorizationForPath) {
+    throw new Error(`No auth token in response: ${JSON.stringify(urlData)}`);
+  }
+  
+  // Direct download URL with token in path
+  return `${downloadBase}/file/${BUCKET_NAME}/${fileName}?Authorization=${authorizationForPath}`;
 }
 
 Deno.serve(async (req) => {
