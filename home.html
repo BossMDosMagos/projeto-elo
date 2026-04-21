@@ -1916,9 +1916,11 @@ if (data.status_venda === 'vendido') {
             const { data: foto } = await supabaseClient.from('fotos_album').select('key').eq('id', id).single();
             
             if (foto?.key) {
-                await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2?key=' + encodeURIComponent(foto.key), {
-                    method: 'DELETE'
-                });
+                try {
+                    await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2?key=' + encodeURIComponent(foto.key), {
+                        method: 'DELETE'
+                    });
+                } catch (e) { console.log('B2 delete error:', e); }
             }
             
             await supabaseClient.from('fotos_album').delete().eq('id', id);

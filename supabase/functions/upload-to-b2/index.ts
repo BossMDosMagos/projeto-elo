@@ -119,11 +119,10 @@ Deno.serve(async (req) => {
       });
     }
 
-    // DELETE request - delete file from B2
+    // DELETE request - delete file from B2 by key
     if (req.method === "DELETE") {
       const url = new URL(req.url);
       const fileKey = url.searchParams.get("key");
-      const fileId = url.searchParams.get("fileId");
       
       if (!fileKey) {
         return new Response(JSON.stringify({ error: "key parameter required" }), {
@@ -133,7 +132,36 @@ Deno.serve(async (req) => {
       
       const { apiUrl, authToken } = await b2Auth();
       
-      // b2_delete_file_version requires fileId + fileName
+      // First get file info to get fileId
+      const listResp = await fetch(`${apiUrl}/b2api/v2/b2_list_file_versions`, {
+        method: "POST",
+        headers: {
+          "Authorization": authToken,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          bucketId: BUCKET_ID,
+          startFileName: fileKey,
+          maxFileCount: 1
+        })
+      });
+      
+      const listText = await listResp.text();
+      let fileId = null;
+      
+      if (listResp.ok) {
+        const listData = JSON.parse(listText);
+        const file = listData.files?.find(f => f.fileName === fileKey);
+        fileId = file?.fileId;
+      }
+      
+      if (!fileId) {
+        return new Response(JSON.stringify({ error: "File not found in B2" }), {
+          status: 404, headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+      
+      // Now delete with fileId
       const delResp = await fetch(`${apiUrl}/b2api/v2/b2_delete_file_version`, {
         method: "POST",
         headers: {
@@ -141,7 +169,7 @@ Deno.serve(async (req) => {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          fileId: fileId || fileKey,
+          fileId: fileId,
           fileName: fileKey
         })
       });
