@@ -39,6 +39,13 @@ async function b2Auth(): Promise<{ apiUrl: string; authToken: string }> {
 }
 
 async function getSignedUrl(apiUrl: string, authToken: string, fileName: string): Promise<string> {
+  // Extract folder prefix (e.g., "usuarios/user-id/album/")
+  const parts = fileName.split('/');
+  parts.pop(); // Remove filename
+  const prefix = parts.join('/') + '/';
+  
+  console.log(">>> Getting signed URL for:", fileName, "prefix:", prefix);
+  
   const urlResp = await fetch(`${apiUrl}/b2api/v2/b2_get_download_authorization`, {
     method: "POST",
     headers: {
@@ -47,13 +54,13 @@ async function getSignedUrl(apiUrl: string, authToken: string, fileName: string)
     },
     body: JSON.stringify({
       bucketId: BUCKET_ID,
-      fileNamePrefix: fileName,
+      fileNamePrefix: prefix,
       validDurationInSeconds: 3600
     })
   });
 
   const urlText = await urlResp.text();
-  console.log(">>> get_download_authorization:", urlResp.status, urlText);
+  console.log(">>> get_download_authorization:", urlResp.status, urlText.substring(0, 200));
 
   if (!urlResp.ok) {
     throw new Error(`get_download_authorization failed: ${urlText}`);
@@ -63,6 +70,7 @@ async function getSignedUrl(apiUrl: string, authToken: string, fileName: string)
   const downloadUrl = urlData.downloadUrl;
   const downloadAuthToken = urlData.authorizationToken;
   
+  // Build signed URL
   return `${downloadUrl}/file/${BUCKET_NAME}/${fileName}?Authorization=${downloadAuthToken}`;
 }
 
