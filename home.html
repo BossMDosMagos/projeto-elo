@@ -1870,6 +1870,15 @@ if (data.status_venda === 'vendido') {
 
         async function excluirFoto(id) {
             if (!confirm('Excluir foto?')) return;
+            
+            const { data: foto } = await supabaseClient.from('fotos_album').select('key').eq('id', id).single();
+            
+            if (foto?.key) {
+                await fetch('https://ilrgsvtztyijgurpvuit.supabase.co/functions/v1/upload-to-b2?key=' + encodeURIComponent(foto.key), {
+                    method: 'DELETE'
+                });
+            }
+            
             await supabaseClient.from('fotos_album').delete().eq('id', id);
             loadFotos();
             showToast('Foto excluída!', 'success');

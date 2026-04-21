@@ -110,6 +110,52 @@ Deno.serve(async (req) => {
       const signedUrl = await getSignedUrl(apiUrl, authToken, fileKey);
       
       return new Response(JSON.stringify({ url: signedUrl }), {
+        status: 200, 
+        headers: { 
+          "Content-Type": "application/json", 
+          "Cache-Control": "public, max-age=3600",
+          ...corsHeaders 
+        }
+      });
+    }
+
+    // DELETE request - delete file from B2
+    if (req.method === "DELETE") {
+      const url = new URL(req.url);
+      const fileKey = url.searchParams.get("key");
+      const fileId = url.searchParams.get("fileId");
+      
+      if (!fileKey) {
+        return new Response(JSON.stringify({ error: "key parameter required" }), {
+          status: 400, headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+      
+      const { apiUrl, authToken } = await b2Auth();
+      
+      // b2_delete_file_version requires fileId + fileName
+      const delResp = await fetch(`${apiUrl}/b2api/v2/b2_delete_file_version`, {
+        method: "POST",
+        headers: {
+          "Authorization": authToken,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          fileId: fileId || fileKey,
+          fileName: fileKey
+        })
+      });
+      
+      const delText = await delResp.text();
+      console.log(">>> Delete response:", delResp.status, delText);
+      
+      if (!delResp.ok) {
+        return new Response(JSON.stringify({ error: `Delete failed: ${delText}` }), {
+          status: 500, headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+      
+      return new Response(JSON.stringify({ success: true, key: fileKey }), {
         status: 200, headers: { "Content-Type": "application/json", ...corsHeaders }
       });
     }
