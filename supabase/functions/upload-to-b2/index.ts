@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -8,6 +10,25 @@ const B2_KEY_ID = Deno.env.get("B2_KEY_ID") || "";
 const B2_APP_KEY = Deno.env.get("B2_APPLICATION_KEY") || "";
 const BUCKET_ID = Deno.env.get("B2_BUCKET_ID") || "";
 const BUCKET_NAME = "Elo-User-Albums";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || "";
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") || "";
+
+async function verifyUser(authHeader: string | null): Promise<string | null> {
+  if (!authHeader) return null;
+  const token = authHeader.replace("Bearer ", "");
+  if (!token) return null;
+  
+  try {
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: { user } } = await supabase.auth.getUser(token);
+    return user?.id || null;
+  } catch {
+    return null;
+  }
+}
 
 console.log("=== START ===");
 console.log("B2_KEY_ID:", B2_KEY_ID ? "SET" : "NOT SET");
@@ -95,6 +116,18 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // GET: no auth required (used by img tags for signed URLs)
+    if (req.method === "GET") {
+      // Skip JWT for GET
+    } else {
+      // POST/DELETE: require JWT
+      const authUser = await verifyUser(req.headers.get("Authorization"));
+      if (!authUser) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { "Content-Type": "application/json", ...corsHeaders }
+        });
+      }
+    }
     // GET request - generate signed URL
     if (req.method === "GET") {
       const url = new URL(req.url);

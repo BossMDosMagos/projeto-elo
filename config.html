@@ -5,14 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ELO | Configurações</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        body { background-image: radial-gradient(circle at center, #0d0d0d 0%, #000000 70%); padding: 100px 20px 30px; }
 
         body {
             background-color: #000000;
@@ -413,6 +409,8 @@
     </footer>
 
     <script src="config.js"></script>
+    <div class="toast-container" id="toastContainer"></div>
+    <script src="utils.js"></script>
     <script>
         let currentUser = null;
         let selectedFile = null;
@@ -510,7 +508,7 @@
                 };
                 reader.readAsDataURL(selectedFile);
             } catch (err) {
-                alert('Erro ao processar imagem');
+                showToast('Erro ao processar imagem', 'error');
                 preview.innerHTML = '?';
             }
         });
@@ -588,26 +586,26 @@
             const confirmPass = document.getElementById('confirmPassword').value;
             
             if (!newPass && !confirmPass) {
-                alert('Preencha os campos de senha nova.');
+                showToast('Preencha os campos de senha nova.', 'error');
                 return;
             }
             
             if (newPass !== confirmPass) {
-                alert('As senhas não conferem!');
+                showToast('As senhas não conferem!', 'error');
                 return;
             }
             
             if (newPass.length < 6) {
-                alert('Senha deve ter pelo menos 6 caracteres.');
+                showToast('Senha deve ter pelo menos 6 caracteres.', 'error');
                 return;
             }
             
             const { error } = await supabaseClient.auth.updateUser({ password: newPass });
             
             if (error) {
-                alert('Erro: ' + error.message);
+                showToast('Erro: ' + error.message, 'error');
             } else {
-                alert('Senha alterada com sucesso!');
+                showToast('Senha alterada com sucesso!', 'success');
                 document.getElementById('newPassword').value = '';
                 document.getElementById('confirmPassword').value = '';
             }
@@ -682,7 +680,7 @@
 
                 loadFotos();
             } catch (err) {
-                alert('Erro: ' + err.message);
+                showToast('Erro: ' + err.message, 'error');
                 document.getElementById('uploadProgress').style.display = 'none';
             }
         }

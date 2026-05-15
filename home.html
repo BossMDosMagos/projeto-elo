@@ -751,7 +751,6 @@
                         filter: 'is_leiloavel=eq.true'
                     },
                     (payload) => {
-                        console.log('Leilão atualizado!', payload);
                         handleLeilaoUpdate(payload);
                     }
 )
@@ -792,9 +791,7 @@ if (data.status_venda === 'vendido') {
 
         function handleLeilaoUpdate(payload) {
             const c = payload.new;
-            console.log(' realtime - Leilao atualizado:', c);
-            
-if (data.status_venda === 'vendido') {
+            if (data.status_venda === 'vendido') {
                 showToast(`Leilão de ${c.nome} foi vendido!`, 'success');
                 loadComunidades();
                 if (currentLeilaoId) {
@@ -1793,7 +1790,7 @@ if (data.status_venda === 'vendido') {
                 }
 
                 const newCount = (data?.curtidas || 0) + 1;
-                console.log('Nova contagem:', newCount);
+                console.log('Nova contagem de curtidas:', newCount);
 
                 const { error: updateError } = await supabaseClient
                     .from('recados')
